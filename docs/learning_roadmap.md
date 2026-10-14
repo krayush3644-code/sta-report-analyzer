@@ -11,8 +11,8 @@
 - [x] Understand clock period and frequency
 - [x] Introduce setup and hold
 - [x] Introduce slack, WNS and TNS
-- [ ] Derive setup and hold equations with clock skew
-- [ ] Understand uncertainty and clock latency
+- [x] Derive setup and hold equations with clock skew
+- [x] Understand uncertainty and clock latency
 - [ ] Understand timing constraints and path groups
 
 ## Phase 2 — Report understanding

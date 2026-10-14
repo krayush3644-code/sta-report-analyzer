@@ -89,3 +89,69 @@ Milestone 1: STA fundamentals.
 
 Complete repository setup, study setup/hold slack in greater detail,
 and analyze a small example timing report.
+
+## Clock-aware setup and hold
+
+Clock skew convention:
+S = t_capture - t_launch
+
+Positive skew means the capture clock arrives later.
+
+### Setup
+
+Latest data arrival:
+A_max = t_launch + t_cq,max + t_data,max
+
+Required arrival time:
+R_setup = T_clock + t_capture - t_setup - U_setup
+
+Setup slack:
+S_setup = R_setup - A_max
+
+Simplified clock-aware equation:
+S_setup = T_clock + S - t_cq,max - t_data,max
+          - t_setup - U_setup
+
+### Hold
+
+Earliest data arrival:
+A_min = t_launch + t_cq,min + t_data,min
+
+Hold threshold:
+R_hold = t_capture + t_hold + U_hold
+
+Hold slack:
+S_hold = A_min - R_hold
+
+Simplified clock-aware equation:
+S_hold = t_cq,min + t_data,min - S
+         - t_hold - U_hold
+
+### Important insight
+
+Positive capture skew generally helps setup but hurts hold.
+Negative capture skew generally hurts setup but helps hold.
+
+These are simplified equations for same-clock register-to-register
+checks. Actual STA behavior depends on constraints, clock modeling,
+uncertainty conventions and the analysis tool.
+
+### Example results
+
+Setup example:
+Clock period = 10 ns
+Skew = +0.3 ns
+Setup slack = +0.8 ns
+
+Hold example:
+Skew = +0.3 ns
+Hold slack = -0.2 ns
+
+### New concepts covered
+
+- Launch and capture clock arrival times
+- Clock skew and its sign convention
+- Required versus actual arrival time
+- Maximum-delay versus minimum-delay analysis
+- Setup and hold uncertainty
+- Setup/hold optimization trade-offs
