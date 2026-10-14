@@ -218,3 +218,31 @@ Hold slack = -0.2 ns
 3. Classify setup and hold checks using report context.
 4. Add unit tests for multiple paths and missing fields.
 5. Rank violating paths and export results to CSV.
+
+## Lesson 7 — Automated Parser Testing
+
+- Automated tests check whether code behaves as expected.
+- Python's built-in `unittest` module supports test cases and assertions.
+- `assertEqual()` compares expected and actual values.
+- `assertAlmostEqual()` compares floating-point values with a tolerance.
+- Tests should cover valid reports, multiple paths, incomplete records, and empty input.
+- A passing test suite increases confidence but does not prove compatibility with every STA report format.
+- The current tests validate the educational sample format, not all Synopsys PrimeTime reports.
+
+### Next improvements
+1. Add diagnostic warnings for incomplete paths.
+2. Test additional numeric formats and report variations.
+3. Validate extracted fields and timing units.
+4. Add tests for metric calculations and critical-path ranking.
+
+
+## Lesson 8 — Timing Metrics Engine
+
+- The parser extracts data; the metrics engine analyzes it.
+- A timing violation occurs when slack is negative.
+- WNS in this project is the most negative slack, or 0 when there are no violations.
+- TNS is the sum of negative slack values; this project retains the negative sign.
+- Violation count is the number of paths with negative slack.
+- Metrics are calculated separately for each reported path type.
+- Setup and hold metrics must be scoped and reported separately in a production-quality analyzer.
+- `unittest` verifies metric calculations independently of report parsing.
