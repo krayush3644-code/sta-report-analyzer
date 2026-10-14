@@ -13,12 +13,12 @@ generates useful reports.
 - [x] Timing path introduced
 - [x] Clock period and frequency introduced
 - [x] Basic setup and hold concepts introduced
-- [ ] Detailed setup and hold slack derivations
-- [ ] Understand a real STA report
-- [ ] Implement report parser
-- [ ] Implement and test WNS/TNS calculations
-- [ ] Implement diagnostics and trend analysis
-- [ ] Generate HTML/CSV dashboard
+- [x] Detailed setup and hold slack derivations
+- [x] Understand a real STA report
+- [x] Implement report parser
+- [x] Implement and test WNS/TNS calculations
+- [x] Implement diagnostics and trend analysis
+- [x] Generate HTML/CSV dashboard
 
 ## Core concepts
 
@@ -155,3 +155,66 @@ Hold slack = -0.2 ns
 - Maximum-delay versus minimum-delay analysis
 - Setup and hold uncertainty
 - Setup/hold optimization trade-offs
+
+## Lesson 4 — Setup/Hold Violations and Timing Metrics
+
+### Setup vs. hold
+- **Setup:** Checks maximum data-path delay. Negative setup slack means data arrives too late.
+- **Hold:** Checks minimum data-path delay. Negative hold slack means data arrives too early relative to the hold requirement.
+- Negative slack indicates a violation; nonnegative slack indicates a pass for that check.
+
+### Metrics used in this project
+- **WNS:** Minimum slack within a defined group of checks. This project retains positive WNS if no violations exist.
+- **TNS:** Sum of negative slack values within the defined group. This project reports TNS as a nonpositive number.
+- Calculate setup and hold metrics separately and define the scope of the checks being analyzed.
+- Different STA tools may display TNS using a different sign convention.
+
+### Analyzer implementation
+1. Store each timing result with its path, check type, and slack.
+2. Filter results into setup and hold groups.
+3. Count negative slacks to obtain violation counts.
+4. Calculate WNS using the minimum slack.
+5. Calculate TNS by summing negative slacks.
+
+**Limitation:** The current Python example uses synthetic, already-parsed data. Report parsing and validation are separate future steps.
+
+## Lesson 5 — STA Report Parsing
+
+### Parser workflow
+1. Read report text from a file.
+2. Identify fields such as Startpoint, Endpoint, Path Group, and Path Type.
+3. Extract timing values such as arrival time, required time, and slack.
+4. Convert numeric text to floating-point values.
+5. Store the results in a Python dictionary for later analysis.
+
+### Python concepts
+- `re.search()` searches for a matching regular-expression pattern.
+- `match.group(1)` retrieves the first captured group.
+- `Path.read_text()` reads a file as text.
+- `None` represents a field that could not be extracted.
+- `float()` converts numeric text into a number.
+
+### Current limitations
+- The first parser supports only our synthetic report format.
+- Timing units are assumed to be ns.
+- The example parses one path, not multiple paths.
+- It does not yet validate required fields or distinguish setup from hold using all relevant report details.
+- Real STA tools may use different formatting and conventions.
+
+## Lesson 6 — Multi-Path Parsing
+
+- A single-path parser returns one dictionary; a multi-path parser returns a list of dictionaries.
+- Each dictionary represents one timing path.
+- A report can be divided into path blocks using recognizable boundaries such as `Startpoint:`.
+- Regular-expression lookahead can split before a boundary without removing the boundary itself.
+- Required-field validation helps prevent incomplete records from entering metric calculations.
+- Keep `max` and `min` path types distinct until the report's timing-check context is understood.
+- WNS is the minimum slack in the selected set; TNS is the sum of negative slacks under this project's convention.
+- The current parser supports a controlled, simplified PrimeTime-style sample, not every PrimeTime report format.
+
+### Next improvements
+1. Test the parser against actual authorized report formatting.
+2. Add warnings for malformed or skipped paths.
+3. Classify setup and hold checks using report context.
+4. Add unit tests for multiple paths and missing fields.
+5. Rank violating paths and export results to CSV.

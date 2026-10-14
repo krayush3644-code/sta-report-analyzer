@@ -1,0 +1,83 @@
+
+import re
+from pathlib import Path
+
+
+NUMBER = r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"
+
+
+def extract_field(pattern, text):
+    match = re.search(
+        pattern,
+        text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    return match.group(1).strip() if match else None
+
+
+def parse_timing_report(report_text):
+    """Parse one path in our simplified report format."""
+    result = {
+        "startpoint": extract_field(
+            r"^\s*Startpoint:\s*(.+?)\s*$", report_text
+        ),
+        "endpoint": extract_field(
+            r"^\s*Endpoint:\s*(.+?)\s*$", report_text
+        ),
+        "path_group": extract_field(
+            r"^\s*Path Group:\s*(.+?)\s*$", report_text
+        ),
+        "path_type": extract_field(
+            r"^\s*Path Type:\s*(\S+)", report_text
+        ),
+    }
+
+    for field, pattern in {
+        "arrival_time_ns": rf"^\s*Data Arrival Time\s+{NUMBER}",
+        "required_time_ns": rf"^\s*Data Required Time\s+{NUMBER}",
+        "slack_ns": rf"^\s*slack\s+\(\w+\)\s+{NUMBER}",
+    }.items():
+        value = extract_field(pattern, report_text)
+        result[field] = float(value) if value is not None else None
+
+    return result
+
+
+def parse_timing_report_file(file_path):
+    text = Path(file_path).read_text(encoding="utf-8")
+    return parse_timing_report(text)
+
+
+def parse_multiple_timing_paths(report_text):
+    """Parse all Startpoint-delimited blocks in our sample format."""
+    blocks = re.split(
+        r"(?=^\s*Startpoint:)",
+        report_text,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+
+    paths = []
+
+    for block in blocks:
+        if not re.search(r"^\s*Startpoint:", block, re.IGNORECASE | re.MULTILINE):
+            continue
+
+        path = parse_timing_report(block)
+
+        # Required fields for this version of our parser.
+        required_fields = (
+            "startpoint",
+            "endpoint",
+            "path_type",
+            "slack_ns",
+        )
+
+        if all(path[field] is not None for field in required_fields):
+            paths.append(path)
+
+    return paths
+
+
+def parse_multiple_timing_paths_file(file_path):
+    text = Path(file_path).read_text(encoding="utf-8")
+    return parse_multiple_timing_paths(text)

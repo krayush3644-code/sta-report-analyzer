@@ -1,0 +1,27 @@
+
+Startpoint: REG_A
+Endpoint: REG_B
+Path Group: core_clock
+Path Type: max
+
+Data Arrival Time    1.75
+Data Required Time   2.00
+slack (MET)          0.25
+
+Startpoint: REG_C
+Endpoint: REG_D
+Path Group: core_clock
+Path Type: max
+
+Data Arrival Time    2.40
+Data Required Time   2.00
+slack (VIOLATED)    -0.40
+
+Startpoint: REG_E
+Endpoint: REG_F
+Path Group: core_clock
+Path Type: min
+
+Data Arrival Time    0.20
+Data Required Time   0.32
+slack (VIOLATED)    -0.12
