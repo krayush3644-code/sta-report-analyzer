@@ -1,10 +1,10 @@
 # Learning Roadmap
 
 ## Phase 0 — Foundation
-- [ ] Verify Python, VS Code and Git
-- [ ] Organize repository
-- [ ] Add README and .gitignore
-- [ ] Establish revision notes
+- [x] Verify Python, VS Code and Git
+- [x] Organize repository
+- [x] Add README and .gitignore
+- [x] Establish revision notes
 
 ## Phase 1 — STA fundamentals
 - [x] Understand timing paths
@@ -13,38 +13,38 @@
 - [x] Introduce slack, WNS and TNS
 - [x] Derive setup and hold equations with clock skew
 - [x] Understand uncertainty and clock latency
-- [ ] Understand timing constraints and path groups
+- [x] Understand timing constraints and path groups
 
 ## Phase 2 — Report understanding
-- [ ] Read real report examples
-- [ ] Identify startpoint and endpoint
-- [ ] Interpret cell delay and net delay
-- [ ] Understand arrival time and required time
-- [ ] Understand timing units and report variations
+- [x] Read real report examples
+- [x] Identify startpoint and endpoint
+- [x] Interpret cell delay and net delay
+- [x] Understand arrival time and required time
+- [x] Understand timing units and report variations
 
 ## Phase 3 — Python implementation
-- [ ] Define timing-path data structures
-- [ ] Build report reader and parser
-- [ ] Add error handling
-- [ ] Create synthetic test reports
-- [ ] Add unit tests
+- [x] Define timing-path data structures
+- [x] Build report reader and parser
+- [x] Add error handling
+- [x] Create synthetic test reports
+- [x] Add unit tests
 
 ## Phase 4 — Analysis
-- [ ] Setup/hold violation summaries
-- [ ] Worst slack and TNS
-- [ ] Critical paths and endpoints
-- [ ] Cell/net delay breakdown
-- [ ] Fanout and buffer-chain diagnostics
+- [x] Setup/hold violation summaries
+- [x] Worst slack and TNS
+- [x] Critical paths and endpoints
+- [x] Cell/net delay breakdown
+- [x] Fanout and buffer-chain diagnostics
 
 ## Phase 5 — Trends and presentation
-- [ ] Compare reports
-- [ ] Track regressions
-- [ ] Export CSV
-- [ ] Generate HTML dashboard
-- [ ] Document supported formats and limitations
+- [x] Compare reports
+- [x] Track regressions
+- [x] Export CSV
+- [x] Generate HTML dashboard
+- [x] Document supported formats and limitations
 
 ## Phase 6 — Validation and release
-- [ ] Validate calculations
-- [ ] Test malformed and incomplete input
-- [ ] Document usage and examples
-- [ ] Prepare GitHub release and CV summary
+- [x] Validate calculations
+- [x] Test malformed and incomplete input
+- [x] Document usage and examples
+- [x] Prepare GitHub release and CV summary

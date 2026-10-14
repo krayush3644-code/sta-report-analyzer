@@ -1,0 +1,18 @@
+
+Startpoint: REG_A
+Endpoint: REG_B
+Path Group: core_clock
+Path Type: max
+
+Point                     Incr      Path
+-------------------------------------------
+clock REG_A (rise edge)    0.000     0.000
+REG_A/CK -> REG_A/Q        0.100     0.100
+U1/A -> U1/Y               0.200     0.300
+U2/A -> U2/Y               0.350     0.650
+U3/A -> U3/Y               0.250     0.900
+REG_B/D                    0.100     1.000
+
+Data Arrival Time                    1.000
+Data Required Time                   2.000
+slack (MET)                          1.000
