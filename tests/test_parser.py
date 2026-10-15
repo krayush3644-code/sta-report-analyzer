@@ -13,7 +13,8 @@ from sta_analyzer.parser import (       # pyright: ignore[reportMissingImports]
     parse_multiple_timing_paths_file,
     parse_timing_points,
     validate_timing_points,
-    
+    classify_path_section,
+    detect_path_section_heading
 )
 
 
@@ -66,8 +67,8 @@ Path Type: max
         paths = parse_multiple_timing_paths("")
 
         self.assertEqual(paths, [])
-        
-    
+
+
     def test_parse_timing_points(self):
         report = """
 Kind | Point | Incr | Path
@@ -147,7 +148,7 @@ OTHER | unknown | 0.10 | 0.20
             "Invalid numeric field: arrival_time_ns",
             warnings,
         )
-        
+
     def test_valid_timing_points_have_no_warnings(self):
         from sta_analyzer.parser import validate_timing_points
 
@@ -198,7 +199,7 @@ OTHER | unknown | 0.10 | 0.20
 
         with self.assertRaises(ValueError):
             validate_timing_points([], tolerance=-0.01)
-            
+
     def test_parse_primetime_style_header(self):
         report = """
     Startpoint: REG_A (rising edge-triggered flip-flop)
@@ -238,8 +239,8 @@ OTHER | unknown | 0.10 | 0.20
 
     def test_ignore_non_timing_table_line(self):
         row = parse_primetime_timing_row("data arrival time 0.85")
-        self.assertIsNone(row)    
-    
+        self.assertIsNone(row)
+
     def test_parse_primetime_style_timing_points(self):
         report_text = """
     Startpoint: REG_A (rising edge-triggered flip-flop)
@@ -317,7 +318,7 @@ class TestTimingPointValidation(unittest.TestCase):
         warnings = validate_timing_points(points)
 
         self.assertEqual(warnings, [])
-                
+
 
 from sta_analyzer.parser import parse_primetime_point_row
 
@@ -385,7 +386,77 @@ FF1/Q (fdef1a15) 0.50 * 1.60 r"""
     assert points[3]["point"] == "FF1/Q (fdef1a15)"
     assert points[3]["transition_direction"] == "r"
     assert all(point["kind"] == "UNKNOWN" for point in points)
-    
+
+from sta_analyzer.parser import classify_path_section
+
+
+def test_classify_clock_network_row():
+    assert classify_path_section(
+        "clock network delay (propagated)"
+    ) == "CLOCK"
+
+
+def test_classify_clock_pin():
+    assert classify_path_section(
+        "FF1/CLK (fdef1a15)"
+    ) == "CLOCK"
+
+
+def test_do_not_guess_data_path_from_cell_name():
+    assert classify_path_section(
+        "U2/Y (buf1a27)"
+    ) == "UNKNOWN"
+
+
+def test_do_not_guess_from_flip_flop_output_name():
+    assert classify_path_section(
+        "FF1/Q (fdef1a15)"
+    ) == "UNKNOWN"
+
+
+def test_detect_launch_clock_path_heading():
+    assert detect_path_section_heading("Launch Clock Path:") == "CLOCK"
+
+
+def test_detect_capture_clock_path_heading():
+    assert detect_path_section_heading("Capture Clock Path:") == "CLOCK"
+
+
+def test_detect_data_path_heading():
+    assert detect_path_section_heading("Data Path:") == "DATA"
+
+
+def test_unknown_heading_is_not_classified():
+    assert detect_path_section_heading("Some Other Section:") is None
+
+
+def test_data_section_classifies_ordinary_points_as_data():
+    report = """Startpoint: FF1/Q
+Endpoint: FF2/D
+Data Path:
+FF1/Q 0.50 0.50
+U2/Y 0.11 0.61
+FF2/D 0.16 0.77
+"""
+    points = parse_timing_points(report)
+
+    assert len(points) == 3
+    assert all(point["path_section"] == "DATA" for point in points)
+
+
+def test_section_resets_for_next_path():
+    report = """Startpoint: FF1/Q
+Endpoint: FF2/D
+Data Path:
+FF1/Q 0.50 0.50
+Startpoint: FF3/Q
+Endpoint: FF4/D
+U3/Y 0.10 0.10
+"""
+    points = parse_timing_points(report)
+
+    assert points[0]["path_section"] == "DATA"
+    assert points[1]["path_section"] == "UNKNOWN"
 
 if __name__ == "__main__":
     unittest.main()

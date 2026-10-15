@@ -4,7 +4,6 @@
 - [x] Verify Python, VS Code and Git
 - [x] Organize repository
 - [x] Add README and .gitignore
-- [x] Establish revision notes
 
 ## Phase 1 — STA fundamentals
 - [x] Understand timing paths
@@ -39,8 +38,8 @@
 ## Phase 5 — Trends and presentation
 - [x] Compare reports
 - [x] Track regressions
-- [x] Export CSV
-- [x] Generate HTML dashboard
+- [ ] Export CSV
+- [ ] Generate HTML dashboard
 - [x] Document supported formats and limitations
 
 ## Phase 6 — Validation and release

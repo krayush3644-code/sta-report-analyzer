@@ -195,6 +195,7 @@ def parse_timing_points(report_text):
     points = []
     current_startpoint = None
     current_endpoint = None
+    current_section = "UNKNOWN"
 
     for line in report_text.splitlines():
         line = line.strip()
@@ -203,10 +204,18 @@ def parse_timing_points(report_text):
         if line.startswith("Startpoint:"):
             current_startpoint = line.split(":", 1)[1].strip().split()[0]
             current_endpoint = None
+            current_section = "UNKNOWN"
             continue
 
         if line.startswith("Endpoint:"):
             current_endpoint = line.split(":", 1)[1].strip().split()[0]
+            continue
+
+        # Update section context when an explicit heading is encountered.
+        section_heading = detect_path_section_heading(line)
+
+        if section_heading is not None:
+            current_section = section_heading
             continue
 
         parts = [part.strip() for part in line.split("|")]
@@ -267,8 +276,10 @@ def parse_timing_points(report_text):
         timing_point = {
             "kind": kind.upper(),
             "point": point,
+            "path_section": classify_path_section(point, current_section),
             "incremental_delay_ns": incremental_delay,
             "cumulative_delay_ns": cumulative_delay,
+
         }
 
         if len(parts) != 4 and row_format == "detailed":
@@ -280,7 +291,7 @@ def parse_timing_points(report_text):
 
         elif len(parts) != 4 and row_format == "point_incr_path":
             timing_point["transition_direction"] = parsed_row["transition"]
-        
+
         # Add path information only when both identifiers are available.
         if current_startpoint and current_endpoint:
             timing_point["startpoint"] = current_startpoint
@@ -323,3 +334,40 @@ def validate_timing_points(points, tolerance=1e-6):
 
     return warnings
 
+
+def classify_path_section(point, section="UNKNOWN"):
+    """Classify a point using explicit clues and report section context.
+
+    Unknown remains UNKNOWN unless the point or section provides evidence.
+    """
+    point_lower = point.strip().lower()
+
+    # Explicit clock clues take precedence over inferred section context.
+    if point_lower.startswith("clock "):
+        return "CLOCK"
+
+    if re.search(r"/(?:clk|ck)(?:\b|$)", point_lower):
+        return "CLOCK"
+
+    section_upper = section.strip().upper()
+    if section_upper in {"CLOCK", "DATA"}:
+        return section_upper
+
+    return "UNKNOWN"
+
+
+def detect_path_section_heading(line):
+    """Recognize section headings supported by our educational parser."""
+    heading = line.strip().rstrip(":").strip().lower()
+
+    if heading in {
+        "launch clock path",
+        "capture clock path",
+        "clock path",
+    }:
+        return "CLOCK"
+
+    if heading == "data path":
+        return "DATA"
+
+    return None
