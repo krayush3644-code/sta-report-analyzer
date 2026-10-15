@@ -343,3 +343,38 @@ The current function analyzes supplied structured data. It does not extract fano
 
 ### Limitations
 The score is an educational prioritization heuristic, not an industry-standard metric or a root-cause diagnosis. The inputs must be derived from appropriate timing-path data, and actual physical-design conclusions require further analysis.
+
+## Lesson 15 — Ranking Paths by Investigation Priority
+
+### Objective
+Rank timing paths according to how urgently they should be investigated, using slack, net-delay share, and buffer/inverter count.
+
+### Concepts learned
+- A negative slack indicates a timing violation under the report's timing convention.
+- Net-delay share indicates the fraction of the supplied cell-plus-net delay attributable to interconnect.
+- Buffer/inverter count can help identify paths worth investigating.
+- Combining these indicators provides a way to prioritize paths for further analysis.
+- When two paths have equal investigation scores, the path with more negative slack is ranked first.
+
+### Implementation
+Added `rank_paths_for_investigation()` to `src/sta_analyzer/diagnostics.py`.
+
+The function:
+1. Accepts a list of timing paths.
+2. Calculates an investigation score for each path using `score_path_for_investigation()`.
+3. Skips paths with missing or invalid scoring inputs.
+4. Sorts paths by descending investigation score.
+5. Uses ascending slack as the tie-breaker.
+6. Returns up to the requested number of paths using the `limit` parameter.
+
+### Scoring rules
+- Negative slack: +3 points.
+- Net-delay share greater than or equal to 60%: +2 points.
+- Buffer/inverter count greater than or equal to 3: +1 point.
+
+### Example
+A path with slack of -0.40 ns, net-delay share of 0.65, and five buffers/inverters receives a score of 6.
+
+A path with slack of -0.12 ns, net-delay share of 0.30, and one buffer receives a score of 3.
+
+The first path is ranked higher because its combined score is greater
