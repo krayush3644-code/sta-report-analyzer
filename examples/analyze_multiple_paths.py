@@ -5,7 +5,8 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from sta_analyzer.parser import parse_multiple_timing_paths_file
+from sta_analyzer.parser import parse_multiple_timing_paths_file    # pyright: ignore[reportMissingImports]
+from sta_analyzer.diagnostics import rank_worst_paths               # pyright: ignore[reportMissingImports]
 
 report_path = (
     PROJECT_ROOT / "data" / "sample_reports" / "multiple_paths.rpt"

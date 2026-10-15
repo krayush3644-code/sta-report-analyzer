@@ -274,10 +274,19 @@ Hold slack = -0.2 ns
 
 ## Lesson 11 — Timing-Point Parsing
 
-- A detailed timing path contains multiple timing points.
-- Incremental delay represents the contribution of a timing arc or net segment.
-- Cumulative path delay is the running sum along the path.
-- Cell and net delay can be analyzed separately when the report identifies them reliably.
-- The new parser supports a controlled educational format, not arbitrary PrimeTime reports.
-- Real report parsing must account for report options, columns, units, timing arcs, and clock-path rows.
+### What I learned
+- A timing path contains individual timing points, including cells and nets.
+- Incremental delay is the delay contributed by an individual point.
+- Cumulative path delay is the accumulated delay up to a timing point.
+- Summing incremental cell delays gives the total cell delay.
+- Summing incremental net delays gives the total net delay.
+- Cell and net delays together contribute to the total data-path delay.
+
+### Example results
+- Total cell delay: 0.45 ns
+- Total net delay: 0.40 ns
+- Total path delay: 0.85 ns
+
+### Important limitation
+The parser currently supports our controlled educational report format. It is not yet a general-purpose parser for actual Synopsys PrimeTime reports.
 
