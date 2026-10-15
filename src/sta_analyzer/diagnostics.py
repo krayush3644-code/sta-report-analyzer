@@ -195,3 +195,48 @@ def rank_paths_for_investigation(paths, limit=10):
     )
 
     return ranked_paths[:limit]
+
+
+def summarize_delays_by_path(timing_points):
+    """Calculate cell, net, and total delay for each identified path."""
+    summaries = {}
+
+    for point in timing_points:
+        startpoint = point.get("startpoint")
+        endpoint = point.get("endpoint")
+
+        # We can group only points with known path identifiers.
+        if not startpoint or not endpoint:
+            continue
+
+        kind = point.get("kind")
+        delay = point.get("incremental_delay_ns")
+
+        if kind not in {"CELL", "NET"}:
+            continue
+
+        if not isinstance(delay, (int, float)) or isinstance(delay, bool):
+            continue
+
+        if delay < 0:
+            continue
+
+        path_key = (startpoint, endpoint)
+
+        if path_key not in summaries:
+            summaries[path_key] = {
+                "startpoint": startpoint,
+                "endpoint": endpoint,
+                "cell_delay_ns": 0.0,
+                "net_delay_ns": 0.0,
+                "total_delay_ns": 0.0,
+            }
+
+        if kind == "CELL":
+            summaries[path_key]["cell_delay_ns"] += delay
+        else:
+            summaries[path_key]["net_delay_ns"] += delay
+
+        summaries[path_key]["total_delay_ns"] += delay
+
+    return list(summaries.values())

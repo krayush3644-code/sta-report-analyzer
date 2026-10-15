@@ -121,11 +121,26 @@ def parse_multiple_timing_paths_file(file_path):
     return parse_multiple_timing_paths(text)
 
 
+
 def parse_timing_points(report_text):
-    """Parse timing-point rows in our educational report format."""
+    """Parse timing-point rows and associate them with a path when possible."""
     points = []
+    current_startpoint = None
+    current_endpoint = None
 
     for line in report_text.splitlines():
+        line = line.strip()
+
+        # Remember the path currently being read.
+        if line.startswith("Startpoint:"):
+            current_startpoint = line.split(":", 1)[1].strip()
+            current_endpoint = None
+            continue
+
+        if line.startswith("Endpoint:"):
+            current_endpoint = line.split(":", 1)[1].strip()
+            continue
+
         parts = [part.strip() for part in line.split("|")]
 
         if len(parts) != 4:
@@ -142,30 +157,42 @@ def parse_timing_points(report_text):
         except ValueError:
             continue
 
-        points.append({
+        timing_point = {
             "kind": kind.upper(),
             "point": point,
             "incremental_delay_ns": incremental_delay,
             "cumulative_delay_ns": cumulative_delay,
-        })
+        }
+
+        # Add path information only when both identifiers are available.
+        if current_startpoint and current_endpoint:
+            timing_point["startpoint"] = current_startpoint
+            timing_point["endpoint"] = current_endpoint
+
+        points.append(timing_point)
 
     return points
 
 
-def validate_timing_points(points, tolerance=1e-6):
-    """Check cumulative delays against incremental delays.
 
-    Intended for our educational report format, where each
-    cumulative value is the running sum of incremental delays.
-    """
+def validate_timing_points(points, tolerance=1e-6):
+    """Check cumulative delays independently for each identified path."""
 
     if tolerance < 0:
         raise ValueError("tolerance must be non-negative")
 
     warnings = []
     expected_cumulative = 0.0
+    previous_path = None
 
     for index, point in enumerate(points, start=1):
+        path = (point.get("startpoint"), point.get("endpoint"))
+
+        # Reset the running total when the path changes.
+        if path != previous_path:
+            expected_cumulative = 0.0
+            previous_path = path
+
         incremental = point["incremental_delay_ns"]
         cumulative = point["cumulative_delay_ns"]
 

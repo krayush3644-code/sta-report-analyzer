@@ -257,5 +257,63 @@ class TestTimingDiagnostics(unittest.TestCase):
             [6, 3, 0],
         )
 
+    def test_summarize_delays_by_path(self):
+        from sta_analyzer.diagnostics import summarize_delays_by_path
+
+        points = [
+            {
+                "kind": "CELL",
+                "incremental_delay_ns": 0.10,
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+            },
+            {
+                "kind": "NET",
+                "incremental_delay_ns": 0.08,
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+            },
+            {
+                "kind": "CELL",
+                "incremental_delay_ns": 0.20,
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+            },
+            {
+                "kind": "CELL",
+                "incremental_delay_ns": 0.15,
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+            },
+            {
+                "kind": "NET",
+                "incremental_delay_ns": 0.10,
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+            },
+            {
+                "kind": "CELL",
+                "incremental_delay_ns": 0.30,
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+            },
+        ]
+
+        results = summarize_delays_by_path(points)
+        by_path = {
+            (item["startpoint"], item["endpoint"]): item
+            for item in results
+        }
+
+        first_path = by_path[("REG_A", "REG_B")]
+        self.assertAlmostEqual(first_path["cell_delay_ns"], 0.30)
+        self.assertAlmostEqual(first_path["net_delay_ns"], 0.08)
+        self.assertAlmostEqual(first_path["total_delay_ns"], 0.38)
+
+        second_path = by_path[("REG_C", "REG_D")]
+        self.assertAlmostEqual(second_path["cell_delay_ns"], 0.45)
+        self.assertAlmostEqual(second_path["net_delay_ns"], 0.10)
+        self.assertAlmostEqual(second_path["total_delay_ns"], 0.55)
+
 if __name__ == "__main__":
     unittest.main()

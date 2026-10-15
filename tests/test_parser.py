@@ -11,6 +11,7 @@ from sta_analyzer.parser import (       # pyright: ignore[reportMissingImports]
     parse_multiple_timing_paths,
     parse_multiple_timing_paths_file,
     parse_timing_points,
+    validate_timing_points,
 )
 
 
@@ -196,6 +197,47 @@ OTHER | unknown | 0.10 | 0.20
         with self.assertRaises(ValueError):
             validate_timing_points([], tolerance=-0.01)
 
+class TestTimingPointValidation(unittest.TestCase):
 
+    def test_cumulative_delay_resets_for_each_path(self):
+        points = [
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "point": "REG_A/Q",
+                "incremental_delay_ns": 0.10,
+                "cumulative_delay_ns": 0.10,
+                "kind": "CELL",
+            },
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "point": "U1/Y",
+                "incremental_delay_ns": 0.08,
+                "cumulative_delay_ns": 0.18,
+                "kind": "CELL",
+            },
+            {
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+                "point": "REG_C/Q",
+                "incremental_delay_ns": 0.20,
+                "cumulative_delay_ns": 0.20,
+                "kind": "CELL",
+            },
+            {
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+                "point": "U2/Y",
+                "incremental_delay_ns": 0.05,
+                "cumulative_delay_ns": 0.25,
+                "kind": "CELL",
+            },
+        ]
+
+        warnings = validate_timing_points(points)
+
+        self.assertEqual(warnings, [])
+                
 if __name__ == "__main__":
     unittest.main()

@@ -33,6 +33,9 @@ for path_type, metrics in result["metrics_by_type"].items():
     print(f"WNS: {metrics['wns_ns']:.2f} ns")
     print(f"TNS: {metrics['tns_ns']:.2f} ns")
 
+print(f"Analyzed paths: {result['analyzed_path_count']}")
+print(f"Invalid paths:  {result['invalid_path_count']}")
+
 print("\n=== INVESTIGATION PRIORITY ===")
 if not result["ranked_paths"]:
     print("No paths had sufficient valid data for scoring.")
