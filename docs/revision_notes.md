@@ -433,3 +433,30 @@ The pipeline currently assumes one detailed path because timing-point rows are n
 - Validation does not prove that a report follows the complete Synopsys PrimeTime format.
 - It does not validate timing constraints or determine setup/hold correctness.
 - The current parser still targets our educational report format.
+
+### Lesson 15 — Timing-Path Tables and Cumulative Delay Validation
+
+**Objective:** Understand incremental versus cumulative delay and validate the consistency of parsed timing-point data.
+
+**Key concepts**
+- Incremental delay is the contribution of the current timing point.
+- Cumulative arrival time represents accumulated delay up to a timing point.
+- For our educational format, cumulative delay should equal the running sum of incremental delays.
+- Floating-point tolerance prevents tiny numerical differences from producing unnecessary warnings.
+
+**Implementation**
+- Added `validate_timing_points()` to `src/sta_analyzer/parser.py`.
+- Checks cumulative delays against the running sum of incremental delays.
+- Reports mismatches with the timing-point index and name.
+- Rejects negative tolerance values.
+
+**Testing**
+- Valid timing-point sequence.
+- Inconsistent cumulative delay.
+- Negative tolerance.
+
+**Limitations**
+- The running-sum rule is specific to our educational report format.
+- Real PrimeTime timing paths may use more complex timing references and structures.
+- This validation checks arithmetic consistency, not whether a path meets setup or hold timing requirements.
+

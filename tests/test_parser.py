@@ -144,6 +144,57 @@ OTHER | unknown | 0.10 | 0.20
             "Invalid numeric field: arrival_time_ns",
             warnings,
         )
+        
+    def test_valid_timing_points_have_no_warnings(self):
+        from sta_analyzer.parser import validate_timing_points
+
+        points = [
+            {
+                "point": "REG_A/Q",
+                "incremental_delay_ns": 0.10,
+                "cumulative_delay_ns": 0.10,
+            },
+            {
+                "point": "net_A",
+                "incremental_delay_ns": 0.08,
+                "cumulative_delay_ns": 0.18,
+            },
+            {
+                "point": "U1/Y",
+                "incremental_delay_ns": 0.20,
+                "cumulative_delay_ns": 0.38,
+            },
+        ]
+
+        self.assertEqual(validate_timing_points(points), [])
+
+    def test_inconsistent_cumulative_delay_is_reported(self):
+        from sta_analyzer.parser import validate_timing_points
+
+        points = [
+            {
+                "point": "REG_A/Q",
+                "incremental_delay_ns": 0.10,
+                "cumulative_delay_ns": 0.10,
+            },
+            {
+                "point": "net_A",
+                "incremental_delay_ns": 0.08,
+                "cumulative_delay_ns": 0.25,
+            },
+        ]
+
+        warnings = validate_timing_points(points)
+
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("net_A", warnings[0])
+        self.assertIn("expected cumulative delay", warnings[0])
+
+    def test_negative_tolerance_is_rejected(self):
+        from sta_analyzer.parser import validate_timing_points
+
+        with self.assertRaises(ValueError):
+            validate_timing_points([], tolerance=-0.01)
 
 
 if __name__ == "__main__":

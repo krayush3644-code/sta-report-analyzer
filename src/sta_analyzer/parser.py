@@ -150,3 +150,34 @@ def parse_timing_points(report_text):
         })
 
     return points
+
+
+def validate_timing_points(points, tolerance=1e-6):
+    """Check cumulative delays against incremental delays.
+
+    Intended for our educational report format, where each
+    cumulative value is the running sum of incremental delays.
+    """
+
+    if tolerance < 0:
+        raise ValueError("tolerance must be non-negative")
+
+    warnings = []
+    expected_cumulative = 0.0
+
+    for index, point in enumerate(points, start=1):
+        incremental = point["incremental_delay_ns"]
+        cumulative = point["cumulative_delay_ns"]
+
+        expected_cumulative += incremental
+
+        if abs(cumulative - expected_cumulative) > tolerance:
+            warnings.append(
+                f"Point {index} ({point['point']}): "
+                f"expected cumulative delay "
+                f"{expected_cumulative:.6f} ns, "
+                f"got {cumulative:.6f} ns"
+            )
+
+    return warnings
+
