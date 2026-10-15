@@ -164,3 +164,34 @@ def score_path_for_investigation(
 
     return score
 
+
+def rank_paths_for_investigation(paths, limit=10):
+    """Rank paths by investigation score, then by worst slack."""
+    if limit < 0:
+        raise ValueError("limit must be non-negative")
+
+    ranked_paths = []
+
+    for path in paths:
+        score = score_path_for_investigation(
+            slack_ns=path.get("slack_ns"),
+            net_delay_share=path.get("net_delay_share"),
+            buffer_count=path.get("buffer_count"),
+        )
+
+        if score is None:
+            continue
+
+        ranked_paths.append({
+            **path,
+            "investigation_score": score,
+        })
+
+    ranked_paths.sort(
+        key=lambda path: (
+            -path["investigation_score"],
+            path["slack_ns"],
+        )
+    )
+
+    return ranked_paths[:limit]

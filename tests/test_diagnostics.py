@@ -18,6 +18,7 @@ from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
     analyze_buffer_chain,
     find_high_fanout_nets,
     score_path_for_investigation,
+    rank_paths_for_investigation,
 )
 
 class TestTimingDiagnostics(unittest.TestCase):
@@ -218,6 +219,42 @@ class TestTimingDiagnostics(unittest.TestCase):
         )
         self.assertIsNone(
             score_path_for_investigation(None, 0.5, 2)
+        )
+
+    def test_rank_paths_for_investigation(self):
+        paths = [
+            {
+                "startpoint": "REG_E",
+                "endpoint": "REG_F",
+                "slack_ns": 0.25,
+                "net_delay_share": 0.45,
+                "buffer_count": 2,
+            },
+            {
+                "startpoint": "REG_C",
+                "endpoint": "REG_D",
+                "slack_ns": -0.12,
+                "net_delay_share": 0.30,
+                "buffer_count": 1,
+            },
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "slack_ns": -0.40,
+                "net_delay_share": 0.65,
+                "buffer_count": 5,
+            },
+        ]
+
+        result = rank_paths_for_investigation(paths)
+
+        self.assertEqual(
+            [path["endpoint"] for path in result],
+            ["REG_B", "REG_D", "REG_F"],
+        )
+        self.assertEqual(
+            [path["investigation_score"] for path in result],
+            [6, 3, 0],
         )
 
 if __name__ == "__main__":
