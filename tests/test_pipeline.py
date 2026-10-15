@@ -42,6 +42,9 @@ class TestAnalysisPipeline(unittest.TestCase):
             result["ranked_paths"][0]["investigation_score"],
             3,
         )
+        
+        self.assertEqual(result["path_warnings"], [])
+        self.assertEqual(result["timing_point_warnings"], [])
 
 
 if __name__ == "__main__":

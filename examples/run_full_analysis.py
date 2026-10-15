@@ -45,3 +45,16 @@ else:
             f"Recognized buffers/inverters: {path['buffer_count']} | "
             f"Score: {path['investigation_score']}"
         )
+
+print("\n=== DATA QUALITY WARNINGS ===")
+
+all_warnings = (
+    result["path_warnings"]
+    + result["timing_point_warnings"]
+)
+
+if not all_warnings:
+    print("No data-quality warnings found.")
+else:
+    for warning in all_warnings:
+        print(f"- {warning}")

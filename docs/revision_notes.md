@@ -460,3 +460,24 @@ The pipeline currently assumes one detailed path because timing-point rows are n
 - Real PrimeTime timing paths may use more complex timing references and structures.
 - This validation checks arithmetic consistency, not whether a path meets setup or hold timing requirements.
 
+### Lesson 16 — Integrating Validation into the Analysis Pipeline
+
+**Objective:** Connect path validation and timing-point validation to the integrated STA analysis workflow.
+
+**Implementation**
+- Imported `validate_timing_path()` and `validate_timing_points()` into `pipeline.py`.
+- Collected path validation warnings separately from timing-point warnings.
+- Added `path_warnings` and `timing_point_warnings` to the pipeline result.
+- Updated `run_full_analysis.py` to display data-quality warnings.
+- Extended the pipeline integration test to check that valid sample data produces no warnings.
+
+**Key concepts**
+- Parsing, validation, and analysis are separate stages.
+- Warnings should be visible to users of the pipeline.
+- Returning warnings makes them available to scripts, tests, and future dashboards.
+
+**Limitations**
+- Warnings are collected but do not yet prevent questionable paths from contributing to metrics.
+- Validation rules currently target the educational report format.
+- A warning-free report is not proof that the timing constraints or physical design are correct.
+

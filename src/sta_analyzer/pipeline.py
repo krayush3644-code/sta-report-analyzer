@@ -2,6 +2,8 @@
 from sta_analyzer.parser import (
     parse_multiple_timing_paths,
     parse_timing_points,
+    validate_timing_path,
+    validate_timing_points,
 )
 from sta_analyzer.metrics import calculate_metrics_by_path_type
 from sta_analyzer.diagnostics import rank_paths_for_investigation
@@ -12,6 +14,19 @@ def analyze_report_text(report_text):
 
     paths = parse_multiple_timing_paths(report_text)
     timing_points = parse_timing_points(report_text)
+    
+    # Validate parsed paths and timing-point arithmetic.
+    path_warnings = []
+
+    for index, path in enumerate(paths, start=1):
+        for warning in validate_timing_path(path):
+            path_warnings.append(
+                f"Path {index}: {warning}"
+            )
+
+    timing_point_warnings = validate_timing_points(
+        timing_points
+    )
 
     # Calculate cell and net delay from the parsed timing points.
     cell_delay_ns = sum(
@@ -70,4 +85,6 @@ def analyze_report_text(report_text):
         "net_delay_ns": net_delay_ns,
         "total_delay_ns": total_delay_ns,
         "ranked_paths": ranked_paths,
+        "path_warnings": path_warnings,
+        "timing_point_warnings": timing_point_warnings,
     }
