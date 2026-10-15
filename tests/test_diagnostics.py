@@ -16,6 +16,7 @@ from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
     get_violating_endpoints,
     classify_delay_dominance,
     analyze_buffer_chain,
+    find_high_fanout_nets,
 )
 
 class TestTimingDiagnostics(unittest.TestCase):
@@ -124,6 +125,57 @@ class TestTimingDiagnostics(unittest.TestCase):
         self.assertEqual(result["buffer_inverter_count"], 0)
         self.assertEqual(result["longest_chain"], 0)
 
+    
+    def test_finds_and_sorts_high_fanout_nets(self):
+        nets = [
+            {"name": "net_A", "fanout": 4},
+            {"name": "net_B", "fanout": 35},
+            {"name": "net_C", "fanout": 20},
+            {"name": "net_D", "fanout": 80},
+        ]
+
+        result = find_high_fanout_nets(nets, threshold=20)
+
+        self.assertEqual(
+            result,
+            [
+                {"name": "net_D", "fanout": 80},
+                {"name": "net_B", "fanout": 35},
+            ],
+        )
+
+
+    def test_custom_fanout_threshold(self):
+        nets = [
+            {"name": "net_A", "fanout": 8},
+            {"name": "net_B", "fanout": 12},
+        ]
+
+        result = find_high_fanout_nets(nets, threshold=10)
+
+        self.assertEqual(
+            result,
+            [{"name": "net_B", "fanout": 12}],
+        )
+
+
+    def test_ignores_invalid_fanout_values(self):
+        nets = [
+            {"name": "net_A", "fanout": None},
+            {"name": "net_B", "fanout": -3},
+            {"name": "net_C", "fanout": "50"},
+            {"name": "net_D"},
+            {"name": "net_E", "fanout": True},
+        ]
+
+        result = find_high_fanout_nets(nets, threshold=20)
+
+        self.assertEqual(result, [])
+
+
+    def test_rejects_negative_threshold(self):
+        with self.assertRaises(ValueError):
+            find_high_fanout_nets([], threshold=-1)
 
 
 if __name__ == "__main__":

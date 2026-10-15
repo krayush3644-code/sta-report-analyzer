@@ -90,3 +90,37 @@ def analyze_buffer_chain(cell_names):
         "longest_chain": longest_chain,
     }
 
+
+def find_high_fanout_nets(nets, threshold=20):
+    """Return nets whose fanout exceeds the configured threshold.
+
+    Each net should be a dictionary with:
+        name: net name
+        fanout: number of loads
+    """
+    if threshold < 0:
+        raise ValueError("threshold must be non-negative")
+
+    high_fanout_nets = []
+
+    for net in nets:
+        fanout = net.get("fanout")
+
+        # Ignore missing, invalid, or negative fanout values.
+        if isinstance(fanout, bool):
+            continue
+
+        if not isinstance(fanout, int) or fanout < 0:
+            continue
+
+        if fanout > threshold:
+            high_fanout_nets.append({
+                "name": net.get("name"),
+                "fanout": fanout,
+            })
+
+    return sorted(
+        high_fanout_nets,
+        key=lambda net: net["fanout"],
+        reverse=True,
+    )

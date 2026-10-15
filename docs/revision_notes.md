@@ -306,3 +306,21 @@ The parser currently supports our controlled educational report format. It is no
 
 ### Limitations
 Cell-name matching is a heuristic. Production analysis should use actual library cell classifications and timing-point data. Buffer count alone does not establish the cause of a setup or hold violation.
+
+## Lesson 13 — High-Fanout Net Diagnostics
+
+### What I learned
+- Fanout is the number of loads driven by a net.
+- High fanout can increase capacitive loading and contribute to delay or slew problems.
+- Physical-design tools may use buffering and cell resizing to improve electrical behavior.
+- High fanout alone does not prove a timing violation.
+
+### Implementation
+- Added `find_high_fanout_nets()` to identify nets above a configurable fanout threshold.
+- Results are sorted from highest to lowest fanout.
+- Missing, invalid, and negative fanout values are ignored.
+- A negative threshold raises a `ValueError`.
+
+### Limitations
+The current function analyzes supplied structured data. It does not extract fanout from PrimeTime reports, and the example threshold is not a universal design rule.
+
