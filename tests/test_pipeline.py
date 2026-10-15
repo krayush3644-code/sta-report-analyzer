@@ -42,7 +42,7 @@ class TestAnalysisPipeline(unittest.TestCase):
             result["ranked_paths"][0]["investigation_score"],
             3,
         )
-        
+
         self.assertEqual(result["path_warnings"], [])
         self.assertEqual(result["timing_point_warnings"], [])
 
@@ -140,6 +140,49 @@ class TestAnalysisPipeline(unittest.TestCase):
         self.assertAlmostEqual(path_b["cell_delay_ns"], 0.45)
         self.assertAlmostEqual(path_b["net_delay_ns"], 0.10)
         self.assertAlmostEqual(path_b["total_delay_ns"], 0.55)
+
+    def test_clock_path_delays_are_excluded_from_data_delay_totals(self):
+        report = """
+    Startpoint: REG_A
+    Endpoint: REG_B
+    Path Group: core_clock
+    Path Type: max
+
+    Launch clock path
+    Kind | Point       | Incr | Path
+    CELL | CLKBUF1/Y   | 0.10 | 0.10
+
+    Data path
+    Kind | Point       | Incr | Path
+    CELL | REG_A/Q     | 0.20 | 0.20
+    NET  | net_A       | 0.15 | 0.35
+
+    Capture clock path
+    Kind | Point       | Incr | Path
+    NET  | clk_net     | 0.05 | 0.05
+
+    Data Arrival Time    0.35
+    Data Required Time   0.50
+    slack (MET)           0.15
+    """
+
+        result = analyze_report_text(report)
+
+        # Clock-path delays must not inflate the data-delay totals.
+        self.assertAlmostEqual(result["cell_delay_ns"], 0.20)
+        self.assertAlmostEqual(result["net_delay_ns"], 0.15)
+        self.assertAlmostEqual(result["total_delay_ns"], 0.35)
+
+        self.assertAlmostEqual(
+            result["total_delay_ns"],
+            result["cell_delay_ns"] + result["net_delay_ns"],
+        )
+
+        summaries = result["delay_summaries_by_path"]
+        self.assertEqual(len(summaries), 1)
+        self.assertAlmostEqual(summaries[0]["cell_delay_ns"], 0.20)
+        self.assertAlmostEqual(summaries[0]["net_delay_ns"], 0.15)
+        self.assertAlmostEqual(summaries[0]["total_delay_ns"], 0.35)
 
 
 if __name__ == "__main__":

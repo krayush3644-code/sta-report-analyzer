@@ -9,16 +9,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
     rank_worst_paths,
     get_violating_endpoints,
-)
-
-from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
-    rank_worst_paths,
-    get_violating_endpoints,
     classify_delay_dominance,
     analyze_buffer_chain,
     find_high_fanout_nets,
     score_path_for_investigation,
     rank_paths_for_investigation,
+    summarize_delays_by_path,
 )
 
 class TestTimingDiagnostics(unittest.TestCase):
@@ -61,7 +57,7 @@ class TestTimingDiagnostics(unittest.TestCase):
             [item["endpoint"] for item in violations],
             ["REG_D", "REG_F"],
         )
-        
+
     def test_cell_dominated_delay(self):
         self.assertEqual(
             classify_delay_dominance(1.5, 0.5),
@@ -93,8 +89,8 @@ class TestTimingDiagnostics(unittest.TestCase):
             classify_delay_dominance(0.0, 0.0),
             "unknown",
         )
-        
-    
+
+
     def test_buffer_chain_counts_cells(self):
         cells = [
             "REG_A",
@@ -127,7 +123,7 @@ class TestTimingDiagnostics(unittest.TestCase):
         self.assertEqual(result["buffer_inverter_count"], 0)
         self.assertEqual(result["longest_chain"], 0)
 
-    
+
     def test_finds_and_sorts_high_fanout_nets(self):
         nets = [
             {"name": "net_A", "fanout": 4},
@@ -258,7 +254,6 @@ class TestTimingDiagnostics(unittest.TestCase):
         )
 
     def test_summarize_delays_by_path(self):
-        from sta_analyzer.diagnostics import summarize_delays_by_path
 
         points = [
             {
@@ -314,6 +309,48 @@ class TestTimingDiagnostics(unittest.TestCase):
         self.assertAlmostEqual(second_path["cell_delay_ns"], 0.45)
         self.assertAlmostEqual(second_path["net_delay_ns"], 0.10)
         self.assertAlmostEqual(second_path["total_delay_ns"], 0.55)
+
+    def test_summarize_delays_excludes_clock_path_rows(self):
+        timing_points = [
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "path_section": "CLOCK",
+                "kind": "CELL",
+                "incremental_delay_ns": 0.10,
+            },
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "path_section": "DATA",
+                "kind": "CELL",
+                "incremental_delay_ns": 0.20,
+            },
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "path_section": "DATA",
+                "kind": "NET",
+                "incremental_delay_ns": 0.15,
+            },
+            {
+                "startpoint": "REG_A",
+                "endpoint": "REG_B",
+                "path_section": "CLOCK",
+                "kind": "NET",
+                "incremental_delay_ns": 0.05,
+            },
+        ]
+
+        summaries = summarize_delays_by_path(timing_points)
+
+        self.assertEqual(len(summaries), 1)
+        summary = summaries[0]
+
+        self.assertAlmostEqual(summary["cell_delay_ns"], 0.20)
+        self.assertAlmostEqual(summary["net_delay_ns"], 0.15)
+        self.assertAlmostEqual(summary["total_delay_ns"], 0.35)
+
 
 if __name__ == "__main__":
     unittest.main()

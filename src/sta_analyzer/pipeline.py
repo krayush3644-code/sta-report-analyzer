@@ -51,12 +51,14 @@ def analyze_report_text(report_text):
         point["incremental_delay_ns"]
         for point in timing_points
         if point["kind"] == "CELL"
+        and point.get("path_section") != "CLOCK"
     )
 
     net_delay_ns = sum(
         point["incremental_delay_ns"]
         for point in timing_points
         if point["kind"] == "NET"
+        and point.get("path_section") != "CLOCK"
     )
 
     total_delay_ns = cell_delay_ns + net_delay_ns
@@ -80,7 +82,7 @@ def analyze_report_text(report_text):
 
     # The current detailed sample contains one path.
     # Attach its derived data to that path.
-    
+
     # Match each parsed path with its own delay summary.
     summaries_by_key = {
         (summary["startpoint"], summary["endpoint"]): summary

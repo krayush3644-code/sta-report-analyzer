@@ -209,6 +209,10 @@ def summarize_delays_by_path(timing_points):
         if not startpoint or not endpoint:
             continue
 
+        # Keep clock-path delays separate from data-path summaries.
+        if point.get("path_section") == "CLOCK":
+            continue
+
         kind = point.get("kind")
         delay = point.get("incremental_delay_ns")
 
