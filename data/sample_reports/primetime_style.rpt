@@ -1,0 +1,14 @@
+
+Startpoint: REG_A (rising edge-triggered flip-flop)
+Endpoint: REG_B (rising edge-triggered flip-flop)
+Path Group: core_clock
+Path Type: max
+
+Point                         Fanout  Cap   Trans  Incr   Path
+REG_A/CK (DFF_X1)                  1  0.01   0.03  0.10   0.10
+REG_A/Q  (DFF_X1)                  2  0.02   0.04  0.08   0.18
+U1/Y     (NAND2_X1)                1  0.01   0.05  0.20   0.38
+
+data arrival time                                    0.38
+data required time                                   0.50
+slack (MET)                                          0.12

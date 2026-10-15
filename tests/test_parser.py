@@ -7,11 +7,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from sta_analyzer.parser import (       # pyright: ignore[reportMissingImports]
+    parse_primetime_timing_row,
     parse_timing_report,
     parse_multiple_timing_paths,
     parse_multiple_timing_paths_file,
     parse_timing_points,
     validate_timing_points,
+    
 )
 
 
@@ -196,6 +198,83 @@ OTHER | unknown | 0.10 | 0.20
 
         with self.assertRaises(ValueError):
             validate_timing_points([], tolerance=-0.01)
+            
+    def test_parse_primetime_style_header(self):
+        report = """
+    Startpoint: REG_A (rising edge-triggered flip-flop)
+    Endpoint: REG_B (rising edge-triggered flip-flop)
+    Path Group: core_clock
+    Path Type: max
+
+    data arrival time 0.85
+    data required time 0.70
+    slack (VIOLATED) -0.15
+    """
+
+        path = parse_timing_report(report)
+
+        self.assertEqual(path["startpoint"], "REG_A")
+        self.assertEqual(path["endpoint"], "REG_B")
+        self.assertEqual(path["path_group"], "core_clock")
+        self.assertEqual(path["path_type"], "max")
+        self.assertAlmostEqual(path["arrival_time_ns"], 0.85)
+        self.assertAlmostEqual(path["required_time_ns"], 0.70)
+        self.assertAlmostEqual(path["slack_ns"], -0.15)
+
+
+    def test_parse_primetime_timing_row(self):
+        line = (
+            "U1/Y (NAND2_X1) "
+            "1 0.01 0.05 0.20 0.38"
+        )
+
+        row = parse_primetime_timing_row(line)
+
+        self.assertIsNotNone(row)
+        self.assertEqual(row["point"], "U1/Y (NAND2_X1)")
+        self.assertAlmostEqual(row["incremental_delay_ns"], 0.20)
+        self.assertAlmostEqual(row["cumulative_delay_ns"], 0.38)
+
+
+    def test_ignore_non_timing_table_line(self):
+        row = parse_primetime_timing_row("data arrival time 0.85")
+        self.assertIsNone(row)    
+    
+    def test_parse_primetime_style_timing_points(self):
+        report_text = """
+    Startpoint: REG_A (rising edge-triggered flip-flop)
+    Endpoint: REG_B (rising edge-triggered flip-flop)
+    Path Group: core_clock
+    Path Type: max
+
+    Point                         Fanout  Cap   Trans  Incr   Path
+    REG_A/CK (DFF_X1)                  1  0.01   0.03  0.10   0.10
+    REG_A/Q  (DFF_X1)                  2  0.02   0.04  0.08   0.18
+    U1/Y     (NAND2_X1)                1  0.01   0.05  0.20   0.38
+
+    data arrival time                                    0.38
+    data required time                                   0.50
+    slack (MET)                                          0.12
+    """
+
+        from sta_analyzer.parser import parse_timing_points
+
+        points = parse_timing_points(report_text)
+
+        self.assertEqual(len(points), 3)
+
+        self.assertEqual(points[0]["point"], "REG_A/CK (DFF_X1)")
+        self.assertAlmostEqual(points[0]["incremental_delay_ns"], 0.10)
+        self.assertAlmostEqual(points[0]["cumulative_delay_ns"], 0.10)
+
+        self.assertEqual(points[1]["point"], "REG_A/Q  (DFF_X1)")
+        self.assertAlmostEqual(points[1]["incremental_delay_ns"], 0.08)
+        self.assertAlmostEqual(points[1]["cumulative_delay_ns"], 0.18)
+
+        self.assertEqual(points[2]["point"], "U1/Y     (NAND2_X1)")
+        self.assertAlmostEqual(points[2]["incremental_delay_ns"], 0.20)
+        self.assertAlmostEqual(points[2]["cumulative_delay_ns"], 0.38)
+
 
 class TestTimingPointValidation(unittest.TestCase):
 

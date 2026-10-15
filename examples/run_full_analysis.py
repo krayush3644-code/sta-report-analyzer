@@ -25,6 +25,23 @@ print(f"Cell delay:  {result['cell_delay_ns']:.2f} ns")
 print(f"Net delay:   {result['net_delay_ns']:.2f} ns")
 print(f"Total delay: {result['total_delay_ns']:.2f} ns")
 
+
+# Display delay breakdown for each individual timing path.
+print("\n=== PER-PATH DELAY SUMMARY ===")
+
+delay_summaries = result.get("delay_summaries_by_path", [])
+
+if not delay_summaries:
+    print("No per-path delay summaries available.")
+else:
+    for summary in delay_summaries:
+        print(
+            f"{summary['startpoint']} -> {summary['endpoint']} | "
+            f"Cell: {summary['cell_delay_ns']:.2f} ns | "
+            f"Net: {summary['net_delay_ns']:.2f} ns | "
+            f"Total: {summary['total_delay_ns']:.2f} ns"
+        )
+
 print("\n=== TIMING METRICS ===")
 for path_type, metrics in result["metrics_by_type"].items():
     print(f"\nPath type: {path_type}")

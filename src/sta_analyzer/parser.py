@@ -15,14 +15,50 @@ def extract_field(pattern, text):
     return match.group(1).strip() if match else None
 
 
+def parse_primetime_timing_row(line):
+    """Parse a simplified whitespace-aligned PrimeTime-style row.
+
+    Supports rows with five trailing numeric columns:
+    Fanout, Cap, Trans, Incr, Path.
+
+    This is a targeted parser for our educational examples,
+    not a complete PrimeTime report parser.
+    """
+    number = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+
+    match = re.match(
+        rf"^\s*(.*?)\s+"
+        rf"({number})\s+({number})\s+({number})\s+"
+        rf"({number})\s+({number})\s*$",
+        line,
+    )
+
+    if not match:
+        return None
+
+    point_name = match.group(1).strip()
+
+    if not point_name or point_name.lower() == "point":
+        return None
+
+    return {
+        "point": point_name,
+        "fanout": float(match.group(2)),
+        "capacitance": float(match.group(3)),
+        "transition": float(match.group(4)),
+        "incremental_delay_ns": float(match.group(5)),
+        "cumulative_delay_ns": float(match.group(6)),
+    }
+
+
 def parse_timing_report(report_text):
     """Parse one path in our simplified report format."""
     result = {
         "startpoint": extract_field(
-            r"^\s*Startpoint:\s*(.+?)\s*$", report_text
+            r"^\s*Startpoint:\s*(\S+)", report_text
         ),
         "endpoint": extract_field(
-            r"^\s*Endpoint:\s*(.+?)\s*$", report_text
+            r"^\s*Endpoint:\s*(\S+)", report_text
         ),
         "path_group": extract_field(
             r"^\s*Path Group:\s*(.+?)\s*$", report_text
@@ -120,8 +156,6 @@ def parse_multiple_timing_paths_file(file_path):
     text = Path(file_path).read_text(encoding="utf-8")
     return parse_multiple_timing_paths(text)
 
-
-
 def parse_timing_points(report_text):
     """Parse timing-point rows and associate them with a path when possible."""
     points = []
@@ -133,29 +167,49 @@ def parse_timing_points(report_text):
 
         # Remember the path currently being read.
         if line.startswith("Startpoint:"):
-            current_startpoint = line.split(":", 1)[1].strip()
+            current_startpoint = line.split(":", 1)[1].strip().split()[0]
             current_endpoint = None
             continue
 
         if line.startswith("Endpoint:"):
-            current_endpoint = line.split(":", 1)[1].strip()
+            current_endpoint = line.split(":", 1)[1].strip().split()[0]
             continue
 
         parts = [part.strip() for part in line.split("|")]
 
-        if len(parts) != 4:
-            continue
+        # Existing educational pipe-separated format.
+        if len(parts) == 4:
+            kind, point, incr_text, path_text = parts
 
-        kind, point, incr_text, path_text = parts
+            if kind.upper() not in {"CELL", "NET"}:
+                continue
 
-        if kind.upper() not in {"CELL", "NET"}:
-            continue
+            try:
+                incremental_delay = float(incr_text)
+                cumulative_delay = float(path_text)
+            except ValueError:
+                continue
 
-        try:
-            incremental_delay = float(incr_text)
-            cumulative_delay = float(path_text)
-        except ValueError:
-            continue
+        # Whitespace-aligned PrimeTime-style format.
+        else:
+            parsed_row = parse_primetime_timing_row(line)
+
+            if parsed_row is None:
+                continue
+
+            point = parsed_row["point"]
+            incremental_delay = parsed_row["incremental_delay_ns"]
+            cumulative_delay = parsed_row["cumulative_delay_ns"]
+            fanout = parsed_row["fanout"]
+            capacitance = parsed_row["capacitance"]
+            transition = parsed_row["transition"]
+
+            if re.search(r"\(\s*net\s*\)", point, re.IGNORECASE):
+                kind = "NET"
+            elif "(" in point and "/" in point:
+                kind = "CELL"
+            else:
+                kind = "UNKNOWN"
 
         timing_point = {
             "kind": kind.upper(),
@@ -163,7 +217,13 @@ def parse_timing_points(report_text):
             "incremental_delay_ns": incremental_delay,
             "cumulative_delay_ns": cumulative_delay,
         }
-
+        if len(parts) != 4:
+            timing_point.update({
+                "fanout": fanout,
+                "capacitance": capacitance,
+                "transition": transition,
+            })
+        
         # Add path information only when both identifiers are available.
         if current_startpoint and current_endpoint:
             timing_point["startpoint"] = current_startpoint
@@ -172,8 +232,6 @@ def parse_timing_points(report_text):
         points.append(timing_point)
 
     return points
-
-
 
 def validate_timing_points(points, tolerance=1e-6):
     """Check cumulative delays independently for each identified path."""
