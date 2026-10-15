@@ -10,6 +10,7 @@ from sta_analyzer.parser import (       # pyright: ignore[reportMissingImports]
     parse_timing_report,
     parse_multiple_timing_paths,
     parse_multiple_timing_paths_file,
+    parse_timing_points,
 )
 
 
@@ -62,6 +63,37 @@ Path Type: max
         paths = parse_multiple_timing_paths("")
 
         self.assertEqual(paths, [])
+        
+    
+    def test_parse_timing_points(self):
+        report = """
+Kind | Point | Incr | Path
+CELL | REG_A/Q | 0.10 | 0.10
+NET | net_A | 0.08 | 0.18
+CELL | U1/Y | 0.20 | 0.38
+"""
+        points = parse_timing_points(report)
+
+        self.assertEqual(len(points), 3)
+        self.assertEqual(points[0]["kind"], "CELL")
+        self.assertEqual(points[1]["kind"], "NET")
+        self.assertAlmostEqual(
+            points[1]["incremental_delay_ns"], 0.08
+        )
+        self.assertAlmostEqual(
+            points[2]["cumulative_delay_ns"], 0.38
+        )
+
+    def test_invalid_timing_point_row_is_skipped(self):
+        report = """
+CELL | REG_A/Q | 0.10 | 0.10
+NET | net_A | invalid | 0.18
+OTHER | unknown | 0.10 | 0.20
+"""
+        points = parse_timing_points(report)
+
+        self.assertEqual(len(points), 1)
+        self.assertEqual(points[0]["point"], "REG_A/Q")
 
 
 if __name__ == "__main__":

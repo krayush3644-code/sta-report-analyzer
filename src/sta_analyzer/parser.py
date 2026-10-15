@@ -81,3 +81,34 @@ def parse_multiple_timing_paths(report_text):
 def parse_multiple_timing_paths_file(file_path):
     text = Path(file_path).read_text(encoding="utf-8")
     return parse_multiple_timing_paths(text)
+
+
+def parse_timing_points(report_text):
+    """Parse timing-point rows in our educational report format."""
+    points = []
+
+    for line in report_text.splitlines():
+        parts = [part.strip() for part in line.split("|")]
+
+        if len(parts) != 4:
+            continue
+
+        kind, point, incr_text, path_text = parts
+
+        if kind.upper() not in {"CELL", "NET"}:
+            continue
+
+        try:
+            incremental_delay = float(incr_text)
+            cumulative_delay = float(path_text)
+        except ValueError:
+            continue
+
+        points.append({
+            "kind": kind.upper(),
+            "point": point,
+            "incremental_delay_ns": incremental_delay,
+            "cumulative_delay_ns": cumulative_delay,
+        })
+
+    return points

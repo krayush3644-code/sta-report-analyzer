@@ -1,0 +1,16 @@
+
+Startpoint: REG_A
+Endpoint: REG_B
+Path Group: core_clock
+Path Type: max
+
+Kind | Point  | Incr | Path
+CELL | REG_A/Q | 0.10 | 0.10
+NET  | net_A   | 0.08 | 0.18
+CELL | U1/Y    | 0.20 | 0.38
+NET  | net_B   | 0.32 | 0.70
+CELL | U2/Y    | 0.15 | 0.85
+
+Data Arrival Time    0.85
+Data Required Time   0.70
+slack (VIOLATED)    -0.15

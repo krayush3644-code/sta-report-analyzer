@@ -156,6 +156,7 @@ Hold slack = -0.2 ns
 - Setup and hold uncertainty
 - Setup/hold optimization trade-offs
 
+
 ## Lesson 4 — Setup/Hold Violations and Timing Metrics
 
 ### Setup vs. hold
@@ -177,6 +178,7 @@ Hold slack = -0.2 ns
 5. Calculate TNS by summing negative slacks.
 
 **Limitation:** The current Python example uses synthetic, already-parsed data. Report parsing and validation are separate future steps.
+
 
 ## Lesson 5 — STA Report Parsing
 
@@ -201,6 +203,7 @@ Hold slack = -0.2 ns
 - It does not yet validate required fields or distinguish setup from hold using all relevant report details.
 - Real STA tools may use different formatting and conventions.
 
+
 ## Lesson 6 — Multi-Path Parsing
 
 - A single-path parser returns one dictionary; a multi-path parser returns a list of dictionaries.
@@ -218,6 +221,7 @@ Hold slack = -0.2 ns
 3. Classify setup and hold checks using report context.
 4. Add unit tests for multiple paths and missing fields.
 5. Rank violating paths and export results to CSV.
+
 
 ## Lesson 7 — Automated Parser Testing
 
@@ -246,3 +250,34 @@ Hold slack = -0.2 ns
 - Metrics are calculated separately for each reported path type.
 - Setup and hold metrics must be scoped and reported separately in a production-quality analyzer.
 - `unittest` verifies metric calculations independently of report parsing.
+
+
+## Lesson 9 — Critical-Path Diagnostics
+
+- Diagnostics turn timing metrics into actionable information.
+- Sorting paths by ascending slack puts the worst slack first.
+- A negative slack indicates a timing violation under the report's timing-check convention.
+- A configurable limit lets us display only the worst N paths.
+- Setup and hold paths should be analyzed separately in production reports.
+- The current implementation ranks paths from our simplified sample format; it does not yet diagnose the physical cause of a violation.
+
+
+## Lesson 10 — Cell Delay vs Net Delay
+
+- Cell delay is the propagation delay through a library cell.
+- Net delay is the delay through interconnect.
+- Cell and net delay can contribute differently to the same path.
+- This project uses a 60% contribution threshold as an educational classification heuristic.
+- Missing, negative, or zero-total delay inputs are classified as unknown.
+- Delay classification is not yet connected to the parser and requires reliable extracted values before it can diagnose real paths.
+
+
+## Lesson 11 — Timing-Point Parsing
+
+- A detailed timing path contains multiple timing points.
+- Incremental delay represents the contribution of a timing arc or net segment.
+- Cumulative path delay is the running sum along the path.
+- Cell and net delay can be analyzed separately when the report identifies them reliably.
+- The new parser supports a controlled educational format, not arbitrary PrimeTime reports.
+- Real report parsing must account for report options, columns, units, timing arcs, and clock-path rows.
+
