@@ -61,7 +61,7 @@ def parse_primetime_point_row(line):
     pattern = re.compile(
         r"^\s*(.*?)\s+"
         r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))"
-        r"\s+\*?\s+"
+        r"\s+(?:\*\s*)?"
         r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))"
         r"(?:\s+([rRfF]))?\s*$"
     )
@@ -224,26 +224,45 @@ def parse_timing_points(report_text):
             except ValueError:
                 continue
 
-        # Whitespace-aligned PrimeTime-style format.
+        # Whitespace-aligned PrimeTime-style format.=
         else:
+            # Format 1: rows containing fanout, capacitance,
+            # transition, incremental delay, and cumulative delay.
             parsed_row = parse_primetime_timing_row(line)
 
-            if parsed_row is None:
-                continue
+            if parsed_row is not None:
+                point = parsed_row["point"]
+                incremental_delay = parsed_row["incremental_delay_ns"]
+                cumulative_delay = parsed_row["cumulative_delay_ns"]
+                fanout = parsed_row["fanout"]
+                capacitance = parsed_row["capacitance"]
+                transition = parsed_row["transition"]
 
-            point = parsed_row["point"]
-            incremental_delay = parsed_row["incremental_delay_ns"]
-            cumulative_delay = parsed_row["cumulative_delay_ns"]
-            fanout = parsed_row["fanout"]
-            capacitance = parsed_row["capacitance"]
-            transition = parsed_row["transition"]
+                # Classify only when the row provides enough evidence.
+                if re.search(r"\(\s*net\s*\)", point, re.IGNORECASE):
+                    kind = "NET"
+                elif "(" in point and "/" in point:
+                    kind = "CELL"
+                else:
+                    kind = "UNKNOWN"
 
-            if re.search(r"\(\s*net\s*\)", point, re.IGNORECASE):
-                kind = "NET"
-            elif "(" in point and "/" in point:
-                kind = "CELL"
+                row_format = "detailed"
+
             else:
+                # Format 2: Point / Incr / Path rows.
+                parsed_row = parse_primetime_point_row(line)
+
+                if parsed_row is None:
+                    continue
+
+                point = parsed_row["point"]
+                incremental_delay = parsed_row["incremental_delay_ns"]
+                cumulative_delay = parsed_row["cumulative_delay_ns"]
+
+                # This format alone does not reliably tell us
+                # whether each row represents a cell or a net.
                 kind = "UNKNOWN"
+                row_format = "point_incr_path"
 
         timing_point = {
             "kind": kind.upper(),
@@ -251,12 +270,16 @@ def parse_timing_points(report_text):
             "incremental_delay_ns": incremental_delay,
             "cumulative_delay_ns": cumulative_delay,
         }
-        if len(parts) != 4:
+
+        if len(parts) != 4 and row_format == "detailed":
             timing_point.update({
                 "fanout": fanout,
                 "capacitance": capacitance,
                 "transition": transition,
             })
+
+        elif len(parts) != 4 and row_format == "point_incr_path":
+            timing_point["transition_direction"] = parsed_row["transition"]
         
         # Add path information only when both identifiers are available.
         if current_startpoint and current_endpoint:

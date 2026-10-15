@@ -352,5 +352,40 @@ def test_parse_primetime_point_row_ignores_summary():
     assert parse_primetime_point_row("data arrival time 1.87") is None
     assert parse_primetime_point_row("slack (MET) 2.92") is None
 
+def test_parse_primetime_point_row_without_star_or_transition():
+    from sta_analyzer.parser import parse_primetime_point_row
+
+    result = parse_primetime_point_row(
+        "FF1/CLK (fdef1a15) 0.00 1.10"
+    )
+
+    assert result is not None
+    assert result["point"] == "FF1/CLK (fdef1a15)"
+    assert result["incremental_delay_ns"] == 0.0
+    assert result["cumulative_delay_ns"] == 1.10
+    assert result["transition"] is None
+
+
+def test_parse_timing_points_in_point_incr_path_format():
+    from sta_analyzer.parser import parse_timing_points
+
+    report = """Startpoint: FF1/Q
+Endpoint: FF2/D
+clock Clk (rise edge) 0.00 0.00
+clock network delay (propagated) 1.10 * 1.10
+FF1/CLK (fdef1a15) 0.00 1.10
+FF1/Q (fdef1a15) 0.50 * 1.60 r"""
+
+    points = parse_timing_points(report)
+
+    assert len(points) == 4
+    assert points[0]["point"] == "clock Clk (rise edge)"
+    assert points[1]["incremental_delay_ns"] == 1.10
+    assert points[2]["cumulative_delay_ns"] == 1.10
+    assert points[3]["point"] == "FF1/Q (fdef1a15)"
+    assert points[3]["transition_direction"] == "r"
+    assert all(point["kind"] == "UNKNOWN" for point in points)
+    
+
 if __name__ == "__main__":
     unittest.main()
