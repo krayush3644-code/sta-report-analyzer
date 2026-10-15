@@ -378,3 +378,31 @@ A path with slack of -0.40 ns, net-delay share of 0.65, and five buffers/inverte
 A path with slack of -0.12 ns, net-delay share of 0.30, and one buffer receives a score of 3.
 
 The first path is ranked higher because its combined score is greater
+
+
+## Lesson 16 — End-to-End STA Analysis Pipeline
+
+### Objective
+Connect the parser, timing metrics and physical-design diagnostics into one runnable analysis workflow.
+
+### Implementation
+- Created `src/sta_analyzer/pipeline.py`.
+- Added `analyze_report_text()` to coordinate report parsing, delay calculations, metrics and investigation ranking.
+- Created `examples/run_full_analysis.py` to display a consolidated analysis.
+- Added `tests/test_pipeline.py` to validate the integrated results.
+
+### Concepts learned
+- Incremental cell and net delays can be aggregated into a total path delay.
+- Net-delay share can be calculated as net delay divided by total cell-plus-net delay.
+- Timing metrics and investigation scores answer different questions.
+- Integration tests verify that separate modules work together.
+
+### Results for the educational sample
+- Cell delay: 0.45 ns
+- Net delay: 0.40 ns
+- Total delay: 0.85 ns
+- Slack: -0.15 ns
+- Investigation score: 3
+
+### Limitations
+The pipeline currently assumes one detailed path because timing-point rows are not yet grouped by path. Buffer/inverter detection is based on cell-name patterns. The report format is educational and is not a general-purpose Synopsys PrimeTime parser.
