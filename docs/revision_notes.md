@@ -157,7 +157,7 @@ Hold slack = -0.2 ns
 - Setup/hold optimization trade-offs
 
 
-## Lesson 4 — Setup/Hold Violations and Timing Metrics
+## Lesson 1 — Setup/Hold Violations and Timing Metrics
 
 ### Setup vs. hold
 - **Setup:** Checks maximum data-path delay. Negative setup slack means data arrives too late.
@@ -180,7 +180,7 @@ Hold slack = -0.2 ns
 **Limitation:** The current Python example uses synthetic, already-parsed data. Report parsing and validation are separate future steps.
 
 
-## Lesson 5 — STA Report Parsing
+## Lesson 2 — STA Report Parsing
 
 ### Parser workflow
 1. Read report text from a file.
@@ -204,7 +204,7 @@ Hold slack = -0.2 ns
 - Real STA tools may use different formatting and conventions.
 
 
-## Lesson 6 — Multi-Path Parsing
+## Lesson 3 — Multi-Path Parsing
 
 - A single-path parser returns one dictionary; a multi-path parser returns a list of dictionaries.
 - Each dictionary represents one timing path.
@@ -223,7 +223,7 @@ Hold slack = -0.2 ns
 5. Rank violating paths and export results to CSV.
 
 
-## Lesson 7 — Automated Parser Testing
+## Lesson 4 — Automated Parser Testing
 
 - Automated tests check whether code behaves as expected.
 - Python's built-in `unittest` module supports test cases and assertions.
@@ -240,7 +240,7 @@ Hold slack = -0.2 ns
 4. Add tests for metric calculations and critical-path ranking.
 
 
-## Lesson 8 — Timing Metrics Engine
+## Lesson 5 — Timing Metrics Engine
 
 - The parser extracts data; the metrics engine analyzes it.
 - A timing violation occurs when slack is negative.
@@ -252,7 +252,7 @@ Hold slack = -0.2 ns
 - `unittest` verifies metric calculations independently of report parsing.
 
 
-## Lesson 9 — Critical-Path Diagnostics
+## Lesson 6 — Critical-Path Diagnostics
 
 - Diagnostics turn timing metrics into actionable information.
 - Sorting paths by ascending slack puts the worst slack first.
@@ -262,7 +262,7 @@ Hold slack = -0.2 ns
 - The current implementation ranks paths from our simplified sample format; it does not yet diagnose the physical cause of a violation.
 
 
-## Lesson 10 — Cell Delay vs Net Delay
+## Lesson 7 — Cell Delay vs Net Delay
 
 - Cell delay is the propagation delay through a library cell.
 - Net delay is the delay through interconnect.
@@ -272,7 +272,7 @@ Hold slack = -0.2 ns
 - Delay classification is not yet connected to the parser and requires reliable extracted values before it can diagnose real paths.
 
 
-## Lesson 11 — Timing-Point Parsing
+## Lesson 8 — Timing-Point Parsing
 
 ### What I learned
 - A timing path contains individual timing points, including cells and nets.
@@ -291,7 +291,7 @@ Hold slack = -0.2 ns
 The parser currently supports our controlled educational report format. It is not yet a general-purpose parser for actual Synopsys PrimeTime reports.
 
 
-## Lesson 12 — Buffer-Chain Diagnostics
+## Lesson 9 — Buffer-Chain Diagnostics
 
 ### What I learned
 - Buffers can improve slew and drive large capacitive loads.
@@ -308,7 +308,7 @@ The parser currently supports our controlled educational report format. It is no
 ### Limitations
 Cell-name matching is a heuristic. Production analysis should use actual library cell classifications and timing-point data. Buffer count alone does not establish the cause of a setup or hold violation.
 
-## Lesson 13 — High-Fanout Net Diagnostics
+## Lesson 10 — High-Fanout Net Diagnostics
 
 ### What I learned
 - Fanout is the number of loads driven by a net.
@@ -326,7 +326,7 @@ Cell-name matching is a heuristic. Production analysis should use actual library
 The current function analyzes supplied structured data. It does not extract fanout from PrimeTime reports, and the example threshold is not a universal design rule.
 
 
-## Lesson 14 — Combined Timing and Physical-Design Diagnostics
+## Lesson 11 — Combined Timing and Physical-Design Diagnostics
 
 ### What I learned
 - Slack indicates the timing margin relative to the required arrival time.
@@ -344,7 +344,7 @@ The current function analyzes supplied structured data. It does not extract fano
 ### Limitations
 The score is an educational prioritization heuristic, not an industry-standard metric or a root-cause diagnosis. The inputs must be derived from appropriate timing-path data, and actual physical-design conclusions require further analysis.
 
-## Lesson 15 — Ranking Paths by Investigation Priority
+## Lesson 12 — Ranking Paths by Investigation Priority
 
 ### Objective
 Rank timing paths according to how urgently they should be investigated, using slack, net-delay share, and buffer/inverter count.
@@ -380,7 +380,7 @@ A path with slack of -0.12 ns, net-delay share of 0.30, and one buffer receives 
 The first path is ranked higher because its combined score is greater
 
 
-## Lesson 16 — End-to-End STA Analysis Pipeline
+## Lesson 13 — End-to-End STA Analysis Pipeline
 
 ### Objective
 Connect the parser, timing metrics and physical-design diagnostics into one runnable analysis workflow.
@@ -406,3 +406,30 @@ Connect the parser, timing metrics and physical-design diagnostics into one runn
 
 ### Limitations
 The pipeline currently assumes one detailed path because timing-point rows are not yet grouped by path. Buffer/inverter detection is based on cell-name patterns. The report format is educational and is not a general-purpose Synopsys PrimeTime parser.
+
+### Lesson 14 — Parser Validation and Data Quality
+
+**Objective:** Improve the reliability of the STA report parser by separating data extraction from data validation.
+
+**Key concepts**
+- Parsing extracts information from text.
+- Validation checks whether the extracted information is usable.
+- Required fields identify a timing path and provide its slack.
+- Numeric fields must contain valid numeric values when present.
+- Validation warnings help identify incomplete or malformed data.
+
+**Implementation**
+- Added `validate_timing_path()` in `src/sta_analyzer/parser.py`.
+- Checks required fields: startpoint, endpoint, path type, and slack.
+- Checks numeric types for arrival time, required time, and slack.
+- Returns a list of warnings rather than stopping at the first problem.
+
+**Testing**
+- Valid timing path.
+- Missing required field.
+- Invalid numeric field.
+
+**Limitations**
+- Validation does not prove that a report follows the complete Synopsys PrimeTime format.
+- It does not validate timing constraints or determine setup/hold correctness.
+- The current parser still targets our educational report format.

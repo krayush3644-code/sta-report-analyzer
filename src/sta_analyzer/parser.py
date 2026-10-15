@@ -43,6 +43,44 @@ def parse_timing_report(report_text):
     return result
 
 
+def validate_timing_path(path):
+    """Return validation warnings for a parsed timing path."""
+
+    warnings = []
+
+    required_fields = (
+        "startpoint",
+        "endpoint",
+        "path_type",
+        "slack_ns",
+    )
+
+    for field in required_fields:
+        value = path.get(field)
+
+        if value is None or value == "":
+            warnings.append(f"Missing required field: {field}")
+
+    numeric_fields = (
+        "arrival_time_ns",
+        "required_time_ns",
+        "slack_ns",
+    )
+
+    for field in numeric_fields:
+        value = path.get(field)
+
+        if value is not None and (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+        ):
+            warnings.append(
+                f"Invalid numeric field: {field}"
+            )
+
+    return warnings
+
+
 def parse_timing_report_file(file_path):
     text = Path(file_path).read_text(encoding="utf-8")
     return parse_timing_report(text)

@@ -95,6 +95,56 @@ OTHER | unknown | 0.10 | 0.20
         self.assertEqual(len(points), 1)
         self.assertEqual(points[0]["point"], "REG_A/Q")
 
+    def test_valid_timing_path_has_no_warnings(self):
+        from sta_analyzer.parser import validate_timing_path
+
+        path = {
+            "startpoint": "REG_A",
+            "endpoint": "REG_B",
+            "path_type": "max",
+            "arrival_time_ns": 0.85,
+            "required_time_ns": 0.70,
+            "slack_ns": -0.15,
+        }
+
+        self.assertEqual(validate_timing_path(path), [])
+
+    def test_missing_required_field_is_reported(self):
+        from sta_analyzer.parser import validate_timing_path
+
+        path = {
+            "startpoint": "REG_A",
+            "endpoint": None,
+            "path_type": "max",
+            "slack_ns": -0.15,
+        }
+
+        warnings = validate_timing_path(path)
+
+        self.assertIn(
+            "Missing required field: endpoint",
+            warnings,
+        )
+
+    def test_invalid_numeric_field_is_reported(self):
+        from sta_analyzer.parser import validate_timing_path
+
+        path = {
+            "startpoint": "REG_A",
+            "endpoint": "REG_B",
+            "path_type": "max",
+            "arrival_time_ns": "not-a-number",
+            "required_time_ns": 0.70,
+            "slack_ns": -0.15,
+        }
+
+        warnings = validate_timing_path(path)
+
+        self.assertIn(
+            "Invalid numeric field: arrival_time_ns",
+            warnings,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
