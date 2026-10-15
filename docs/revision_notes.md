@@ -290,6 +290,7 @@ Hold slack = -0.2 ns
 ### Important limitation
 The parser currently supports our controlled educational report format. It is not yet a general-purpose parser for actual Synopsys PrimeTime reports.
 
+
 ## Lesson 12 — Buffer-Chain Diagnostics
 
 ### What I learned
@@ -324,3 +325,21 @@ Cell-name matching is a heuristic. Production analysis should use actual library
 ### Limitations
 The current function analyzes supplied structured data. It does not extract fanout from PrimeTime reports, and the example threshold is not a universal design rule.
 
+
+## Lesson 14 — Combined Timing and Physical-Design Diagnostics
+
+### What I learned
+- Slack indicates the timing margin relative to the required arrival time.
+- Net-delay share indicates how much of the supplied cell-plus-net delay comes from interconnect.
+- Buffer count can indicate a path worth examining more closely.
+- Multiple indicators can help prioritize investigation.
+
+### Implementation
+- Added `score_path_for_investigation()`.
+- Negative slack adds 3 points.
+- Net-delay share of at least 60% adds 2 points.
+- Buffer/inverter count of at least 3 adds 1 point.
+- Invalid inputs return `None`.
+
+### Limitations
+The score is an educational prioritization heuristic, not an industry-standard metric or a root-cause diagnosis. The inputs must be derived from appropriate timing-path data, and actual physical-design conclusions require further analysis.

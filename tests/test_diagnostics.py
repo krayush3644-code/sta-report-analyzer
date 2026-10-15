@@ -17,6 +17,7 @@ from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
     classify_delay_dominance,
     analyze_buffer_chain,
     find_high_fanout_nets,
+    score_path_for_investigation,
 )
 
 class TestTimingDiagnostics(unittest.TestCase):
@@ -177,6 +178,47 @@ class TestTimingDiagnostics(unittest.TestCase):
         with self.assertRaises(ValueError):
             find_high_fanout_nets([], threshold=-1)
 
+
+    def test_high_priority_path_score(self):
+        score = score_path_for_investigation(
+            slack_ns=-0.40,
+            net_delay_share=0.65,
+            buffer_count=5,
+        )
+
+        self.assertEqual(score, 6)
+
+
+    def test_setup_violation_only_score(self):
+        score = score_path_for_investigation(
+            slack_ns=-0.12,
+            net_delay_share=0.30,
+            buffer_count=1,
+        )
+
+        self.assertEqual(score, 3)
+
+
+    def test_non_violating_path_score(self):
+        score = score_path_for_investigation(
+            slack_ns=0.25,
+            net_delay_share=0.45,
+            buffer_count=2,
+        )
+
+        self.assertEqual(score, 0)
+
+
+    def test_invalid_path_score_inputs(self):
+        self.assertIsNone(
+            score_path_for_investigation(-0.2, 1.5, 4)
+        )
+        self.assertIsNone(
+            score_path_for_investigation(-0.2, 0.5, -1)
+        )
+        self.assertIsNone(
+            score_path_for_investigation(None, 0.5, 2)
+        )
 
 if __name__ == "__main__":
     unittest.main()

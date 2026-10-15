@@ -124,3 +124,43 @@ def find_high_fanout_nets(nets, threshold=20):
         key=lambda net: net["fanout"],
         reverse=True,
     )
+
+def score_path_for_investigation(
+    slack_ns,
+    net_delay_share,
+    buffer_count,
+):
+    """Assign a simple investigation-priority score to a timing path.
+
+    This is an educational heuristic, not a root-cause diagnosis.
+    """
+    score = 0
+
+    if not isinstance(slack_ns, (int, float)) or isinstance(slack_ns, bool):
+        return None
+
+    if (
+        not isinstance(net_delay_share, (int, float))
+        or isinstance(net_delay_share, bool)
+        or not 0 <= net_delay_share <= 1
+    ):
+        return None
+
+    if (
+        not isinstance(buffer_count, int)
+        or isinstance(buffer_count, bool)
+        or buffer_count < 0
+    ):
+        return None
+
+    if slack_ns < 0:
+        score += 3
+
+    if net_delay_share >= 0.60:
+        score += 2
+
+    if buffer_count >= 3:
+        score += 1
+
+    return score
+
