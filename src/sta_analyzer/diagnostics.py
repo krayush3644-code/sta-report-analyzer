@@ -53,3 +53,40 @@ def classify_delay_dominance(cell_delay_ns, net_delay_ns):
         return "net-dominated"
 
     return "balanced"
+
+
+def is_buffer_or_inverter(cell_name):
+    """Return whether a cell name looks like a buffer or inverter."""
+    if not isinstance(cell_name, str):
+        return False
+
+    name = cell_name.upper()
+
+    return "BUF" in name or "INV" in name
+
+
+def analyze_buffer_chain(cell_names):
+    """Analyze buffer/inverter cells in the supplied path order."""
+    if not cell_names:
+        return {
+            "buffer_inverter_count": 0,
+            "longest_chain": 0,
+        }
+
+    total_count = 0
+    current_chain = 0
+    longest_chain = 0
+
+    for cell_name in cell_names:
+        if is_buffer_or_inverter(cell_name):
+            total_count += 1
+            current_chain += 1
+            longest_chain = max(longest_chain, current_chain)
+        else:
+            current_chain = 0
+
+    return {
+        "buffer_inverter_count": total_count,
+        "longest_chain": longest_chain,
+    }
+

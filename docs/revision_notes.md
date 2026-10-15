@@ -290,3 +290,19 @@ Hold slack = -0.2 ns
 ### Important limitation
 The parser currently supports our controlled educational report format. It is not yet a general-purpose parser for actual Synopsys PrimeTime reports.
 
+## Lesson 12 — Buffer-Chain Diagnostics
+
+### What I learned
+- Buffers can improve slew and drive large capacitive loads.
+- Each buffer adds delay, area and power.
+- A buffer chain consists of consecutive buffer and/or inverter stages.
+- Total buffer/inverter count and longest consecutive chain are different metrics.
+- A large chain can be worth investigating, but does not automatically indicate a timing violation.
+
+### Implementation
+- Added `is_buffer_or_inverter()` for educational cell-name classification.
+- Added `analyze_buffer_chain()` to count matching cells and find the longest consecutive chain.
+- Added tests for a mixed path, a path without buffers, and an empty path.
+
+### Limitations
+Cell-name matching is a heuristic. Production analysis should use actual library cell classifications and timing-point data. Buffer count alone does not establish the cause of a setup or hold violation.

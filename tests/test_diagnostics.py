@@ -15,6 +15,7 @@ from sta_analyzer.diagnostics import (  # pyright: ignore[reportMissingImports]
     rank_worst_paths,
     get_violating_endpoints,
     classify_delay_dominance,
+    analyze_buffer_chain,
 )
 
 class TestTimingDiagnostics(unittest.TestCase):
@@ -89,6 +90,39 @@ class TestTimingDiagnostics(unittest.TestCase):
             classify_delay_dominance(0.0, 0.0),
             "unknown",
         )
+        
+    
+    def test_buffer_chain_counts_cells(self):
+        cells = [
+            "REG_A",
+            "BUF_X1",
+            "BUF_X2",
+            "NAND_X1",
+            "INV_X1",
+            "BUF_X1",
+            "REG_B",
+        ]
+
+        result = analyze_buffer_chain(cells)
+
+        self.assertEqual(result["buffer_inverter_count"], 4)
+        self.assertEqual(result["longest_chain"], 2)
+
+
+    def test_buffer_chain_without_buffers(self):
+        cells = ["REG_A", "NAND_X1", "AND_X1", "REG_B"]
+
+        result = analyze_buffer_chain(cells)
+
+        self.assertEqual(result["buffer_inverter_count"], 0)
+        self.assertEqual(result["longest_chain"], 0)
+
+
+    def test_empty_buffer_chain(self):
+        result = analyze_buffer_chain([])
+
+        self.assertEqual(result["buffer_inverter_count"], 0)
+        self.assertEqual(result["longest_chain"], 0)
 
 
 
