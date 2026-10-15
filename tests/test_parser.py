@@ -318,5 +318,39 @@ class TestTimingPointValidation(unittest.TestCase):
 
         self.assertEqual(warnings, [])
                 
+
+from sta_analyzer.parser import parse_primetime_point_row
+
+
+def test_parse_primetime_point_row_with_transition():
+    row = "FF1/Q (fdef1a15)       0.50 *     1.60 r"
+
+    result = parse_primetime_point_row(row)
+
+    assert result == {
+        "point": "FF1/Q (fdef1a15)",
+        "incremental_delay_ns": 0.50,
+        "cumulative_delay_ns": 1.60,
+        "transition": "r",
+    }
+
+
+def test_parse_primetime_point_row_without_markers():
+    row = "clock Clk (rise edge)       0.00       0.00"
+
+    result = parse_primetime_point_row(row)
+
+    assert result == {
+        "point": "clock Clk (rise edge)",
+        "incremental_delay_ns": 0.00,
+        "cumulative_delay_ns": 0.00,
+        "transition": None,
+    }
+
+
+def test_parse_primetime_point_row_ignores_summary():
+    assert parse_primetime_point_row("data arrival time 1.87") is None
+    assert parse_primetime_point_row("slack (MET) 2.92") is None
+
 if __name__ == "__main__":
     unittest.main()

@@ -51,6 +51,40 @@ def parse_primetime_timing_row(line):
     }
 
 
+def parse_primetime_point_row(line):
+    """Parse a Point / Incr / Path row from a PrimeTime-style report.
+
+    This targets the table format in our example; it is not a
+    universal parser for every PrimeTime report format.
+    """
+
+    pattern = re.compile(
+        r"^\s*(.*?)\s+"
+        r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))"
+        r"\s+\*?\s+"
+        r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))"
+        r"(?:\s+([rRfF]))?\s*$"
+    )
+
+    match = pattern.match(line)
+
+    if not match:
+        return None
+
+    point = match.group(1).strip()
+
+    # Reject headings and summary rows.
+    if not point or point.lower() == "point":
+        return None
+
+    return {
+        "point": point,
+        "incremental_delay_ns": float(match.group(2)),
+        "cumulative_delay_ns": float(match.group(3)),
+        "transition": match.group(4),
+    }
+
+
 def parse_timing_report(report_text):
     """Parse one path in our simplified report format."""
     result = {
