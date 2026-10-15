@@ -13,4 +13,5 @@ __pycache__/
 Thumbs.db
 
 # Generated analysis outputs
+output/
 outputs/
