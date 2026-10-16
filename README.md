@@ -132,6 +132,8 @@ sta-report-analyzer/
 ├── tests/
 ├── .gitignore
 └── README.md
+└──synthetic_sta_report_1000_paths_min_max.rpt
+└──synthetic_sta_report_1000_paths.rpt
 ```
 
 ## Limitations
