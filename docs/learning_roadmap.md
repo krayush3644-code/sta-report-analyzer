@@ -38,8 +38,8 @@
 ## Phase 5 — Trends and presentation
 - [x] Compare reports
 - [x] Track regressions
-- [ ] Export CSV
-- [ ] Generate HTML dashboard
+- [x] Export CSV
+- [x] Generate HTML dashboard
 - [x] Document supported formats and limitations
 
 ## Phase 6 — Validation and release
