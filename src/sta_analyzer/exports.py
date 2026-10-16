@@ -94,6 +94,46 @@ def export_html(result, report_name, output_path):
     def esc(value):
         return html.escape(str(value))
 
+    # Group every valid path into a slack range for visualization.
+    slack_bins = [
+        ("Below -0.1 ns", lambda slack: slack < -0.1),
+        ("-0.1 to 0 ns", lambda slack: -0.1 <= slack < 0),
+        ("0 to 0.1 ns", lambda slack: 0 <= slack <= 0.1),
+        ("Above 0.1 ns", lambda slack: slack > 0.1),
+    ]
+
+    slack_distribution = [
+        {
+            "label": label,
+            "count": sum(
+                1 for slack in result.get("all_valid_slacks", [])
+                if condition(slack)
+            ),
+        }
+        for label, condition in slack_bins
+    ]
+
+    max_bin_count = max(
+        (item["count"] for item in slack_distribution),
+        default=0,
+    )
+
+    slack_chart_rows = []
+    for item in slack_distribution:
+        bar_width = (
+            item["count"] / max_bin_count * 100
+            if max_bin_count else 0
+        )
+        slack_chart_rows.append(
+            "<div class='slack-row'>"
+            f"<span>{esc(item['label'])}</span>"
+            "<div class='bar-track'>"
+            f"<div class='bar' style='width:{bar_width:.2f}%'></div>"
+            "</div>"
+            f"<strong>{item['count']}</strong>"
+            "</div>"
+        )
+
     metric_rows = []
     for path_type, metrics in result["metrics_by_type"].items():
         metric_rows.append(
@@ -154,6 +194,31 @@ table {{ width: 100%; border-collapse: collapse; margin: 14px 0 28px; }}
 th, td {{ border: 1px solid #d5dbe5; padding: 9px; text-align: left; }}
 th {{ background: #edf2f8; }}
 .note {{ color: #596579; font-size: 0.92rem; }}
+.slack-row {{
+    display: grid;
+    grid-template-columns: 130px minmax(80px, 1fr) 45px;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}}
+.bar-track {{
+    background: #edf2f8;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 20px;
+}}
+.bar {{
+    background: #4776b4;
+    height: 100%;
+    min-width: 0;
+}}
+@media (max-width: 520px) {{
+    .slack-row {{
+        grid-template-columns: 105px minmax(50px, 1fr) 35px;
+        gap: 7px;
+        font-size: 0.85rem;
+    }}
+}}
 </style>
 </head>
 <body>
@@ -171,6 +236,15 @@ th {{ background: #edf2f8; }}
     <p>{result['cell_delay_ns']:.3f} ns</p></div>
   <div class="card"><strong>Total net delay</strong>
     <p>{result['net_delay_ns']:.3f} ns</p></div>
+</div>
+
+<h2>Slack distribution</h2>
+<p class="note">
+  Distribution of all valid analyzed paths by slack range.
+  Negative slack indicates a timing violation.
+</p>
+<div>
+  {''.join(slack_chart_rows)}
 </div>
 
 <h2>Timing metrics by path type</h2>

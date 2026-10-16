@@ -135,6 +135,7 @@ def analyze_report_text(report_text):
     ]
 
     ranked_paths = rank_paths_for_investigation(scoreable_paths)
+    all_valid_slacks = [path["slack_ns"] for path in valid_paths]
 
     return {
         "metrics_by_type": metrics_by_type,
@@ -143,6 +144,7 @@ def analyze_report_text(report_text):
         "net_delay_ns": net_delay_ns,
         "total_delay_ns": total_delay_ns,
         "ranked_paths": ranked_paths,
+        "all_valid_slacks": all_valid_slacks,
         "path_warnings": path_warnings,
         "timing_point_warnings": timing_point_warnings,
         "analyzed_path_count": len(valid_paths),
