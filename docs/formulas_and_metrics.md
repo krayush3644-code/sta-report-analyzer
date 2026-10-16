@@ -1,64 +1,129 @@
-# STA Formulas and Metrics
+# Formulas and Metrics
 
-## 1. Clock
+This document records the core timing equations and metrics used by the STA Report Analyzer. Values are expressed in nanoseconds (ns) unless stated otherwise.
 
-f_clock = 1 / T_clock
+## 1. Clock period and frequency
 
-Example:
-T_clock = 10 ns
-f_clock = 100 MHz
+For a periodic clock:
 
-## 2. Simplified setup check
+\[
+T = \frac{1}{f}
+\]
 
-Required condition:
+If frequency is expressed in GHz, the corresponding period in ns is:
 
-T_cq,max + T_data,max + T_setup <= T_clock
+\[
+T_{\text{ns}} = \frac{1}{f_{\text{GHz}}}
+\]
 
-Setup slack:
+Example: a 1 GHz clock has a period of 1 ns.
 
-T_clock - T_cq,max - T_data,max - T_setup
+## 2. Setup timing
 
-Negative setup slack indicates a timing violation.
+A setup check ensures that data arrives sufficiently early before the capture clock edge.
 
-## 3. Simplified hold check
+A simplified setup slack equation is:
 
-Required condition:
+\[
+\text{Setup Slack} = \text{Required Arrival Time} - \text{Actual Data Arrival Time}
+\]
 
-T_cq,min + T_data,min >= T_hold
+- Positive slack: the setup requirement is met.
+- Zero slack: the path is exactly at the timing boundary.
+- Negative slack: the setup requirement is violated.
 
-Hold margin:
+A simplified register-to-register setup equation, including launch/capture clock arrival times, is:
 
-T_cq,min + T_data,min - T_hold
+\[
+\text{Setup Slack} =
+T_{\text{period}} + T_{\text{capture clock}} - T_{\text{launch clock}}
+- T_{\text{setup}} - T_{\text{uncertainty}} - T_{\text{data path}}
+\]
 
-A negative margin indicates a hold violation in this simplified model.
+This is a teaching equation. Sign conventions and additional terms can vary by report and timing model.
 
-## 4. Worst slack
+## 3. Hold timing
 
-Minimum slack among the selected checks.
+A hold check ensures that new data does not arrive too soon after the capture clock edge.
 
-Always record:
-- Timing check type
-- Path group or analysis group
-- Units
-- Reporting convention
+A simplified hold slack equation is:
 
-## 5. Total negative slack
+\[
+\text{Hold Slack} =
+T_{\text{launch clock}} + T_{\text{data path}}
+- T_{\text{capture clock}} - T_{\text{hold}} - T_{\text{uncertainty}}
+\]
 
-Sum the negative slack values for the explicitly defined set
-of timing checks.
+- Positive slack: the hold requirement is met.
+- Negative slack: the hold requirement is violated.
 
-Do not combine setup and hold metrics without clearly separating
-their analysis and sign conventions.
+Always confirm the sign convention and exact fields in the STA tool's report.
 
-## 6. Validation principles
+## 4. Worst Negative Slack (WNS)
 
-- Convert all values to a consistent time unit.
-- Handle zero-violation cases explicitly.
-- Test positive, zero and negative slack.
-- Compare computed values with known expected results.
-- Document how duplicate endpoints and multiple path groups
-  are handled.
+For a set of paths, define each path slack as \(s_i\).
 
-Note: The equations above are simplified educational forms.
-Production STA calculations require full timing constraints
-and launch/capture clock information.
+\[
+\text{WNS} = \min(0, \min_i s_i)
+\]
+
+This convention reports zero when there are no negative slacks. Some tools or reports may present WNS differently, so preserve the convention used by this project when comparing results.
+
+## 5. Total Negative Slack (TNS)
+
+\[
+\text{TNS} = \sum_{i: s_i < 0} s_i
+\]
+
+TNS is zero when no path has negative slack. It becomes more negative as violating slack accumulates.
+
+Do not compare TNS values without checking whether the reports use the same path groups, check types, corners, modes, and path coverage.
+
+## 6. Violation count and violation rate
+
+\[
+N_{\text{violations}} = \left|\{i : s_i < 0\}\right|
+\]
+
+\[
+\text{Violation Rate} =
+\frac{N_{\text{violations}}}{N_{\text{valid paths}}}\times 100\%
+\]
+
+The denominator should include only paths accepted by the analyzer's validation stage.
+
+## 7. Data-path delay
+
+For timing points that represent data-path cell and net delays:
+
+\[
+D_{\text{data}} = D_{\text{cell}} + D_{\text{net}}
+\]
+
+Clock-path points should not be included in this data-path total. The analyzer's summaries depend on correct point classification and on the input format providing usable delay values.
+
+## 8. Delay dominance heuristic
+
+The analyzer uses a heuristic to flag paths where one delay component dominates. A common ratio is:
+
+\[
+R_{\text{cell}} = \frac{D_{\text{cell}}}{D_{\text{cell}}+D_{\text{net}}}
+\qquad
+R_{\text{net}} = \frac{D_{\text{net}}}{D_{\text{cell}}+D_{\text{net}}}
+\]
+
+A threshold such as 60% can be used as a screening heuristic, not as proof of root cause. The project’s implementation and tests define the exact classification behavior.
+
+## 9. Buffer and high-fanout indicators
+
+Buffer/inverter chains and high-fanout nets are diagnostic indicators. They are not timing equations and should not be treated as automatic proof that a path needs a particular ECO.
+
+## 10. Interpretation checklist
+
+When reviewing metrics, record:
+- Setup (`max`) or hold (`min`) check type.
+- Path group, clock mode, process/voltage/temperature corner, and report scope when available.
+- Number of valid and invalid paths.
+- WNS, TNS, and violation count.
+- Whether clock-path delays were excluded from data-path summaries.
+- Whether two reports are comparable before interpreting changes.
